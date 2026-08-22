@@ -79,3 +79,13 @@
 影响：`agent/AGENTS.md` 必须加入 Remote Sync Gate；`chat/CHAT_CORE.md` / `USAGE.md` 明确 GitHub 任务的开工与验收都要基于刷新后的远端 refs。同步失败时报告 `BLOCKED_REMOTE_SYNC`；发现 task/ref 漂移无法安全解释时报告 `BLOCKED_REMOTE_DRIFT`。Agent 报告应记录本轮核验使用的 live remote refs。
 
 来源：用户于 2026-08-22 在 TASK-0004 验收后明确指出 Verifier 未先拉取云端更新。
+
+## D-009
+
+决定：GitHub/远端 Git TASK 必须显式声明 `remote_actions`；任何未声明或含义不明确的远端动作默认禁止。push 工作分支、开 PR、merge、deploy、release 是相互独立的权限，不能互相推导。
+
+理由：工具能力、工作分支存在、测试 PASS、Chat 内容验收或某一项远端动作获准，都不能自动推出更高风险动作的授权。
+
+影响：`push_work_branch` 只允许按 TASK 指定分支非 force push；非 `RELEASE` 角色不得 merge/deploy/release。只有 `RELEASE` TASK 同时具备动作 `allowed`、Chat 记录的 accepted exact ref/live target、以及由 Chat 根据用户明确指令写入的 `user_authorized_actions`，才可执行 merge/deploy/release。merge 与 release 必须分别授权；merge 后、release 后都必须回读 exact ref/Release/tag/asset。`ACCEPTED_WORK_REF` 只代表内容验收，不产生 merge/release 权限。
+
+来源：用户于 2026-08-22 明确要求本轮完整修复 push/merge/release 权限。
