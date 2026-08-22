@@ -1,6 +1,6 @@
 # 项目说明
 
-last_verified_ref: 6a737b18204b6336f3be99df93dfa19c5aaafe89
+last_verified_ref: 23f0fdda391963d00f4f6081e613baba8b5876be
 
 ## 用途
 
@@ -34,6 +34,8 @@ last_verified_ref: 6a737b18204b6336f3be99df93dfa19c5aaafe89
 youling/ai-use@1ddfeb0dd6a606dbc80ab86de8903d6888077bc6
 ```
 
-## 未知
+## 当前发布状态
 
-- 当前 GitHub 连接没有直接创建 GitHub Release / 上传 Release asset 的可用动作；仓库整理和本地发布包不受影响。
+- 已审计产品内容 ref：`23f0fdda391963d00f4f6081e613baba8b5876be`。
+- v1.0.0 发布 ZIP 已生成并校验。
+- 当前 GitHub 连接没有 Create Release / 上传 Release asset 的可调用动作，因此正式 GitHub Release 尚未创建。
