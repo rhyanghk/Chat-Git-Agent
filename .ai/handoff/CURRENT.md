@@ -12,7 +12,7 @@ recent_accepted_decisions:
 next_actions:
   - 按需安装聊天端和执行端规则。
   - 原项目有新提交时按维护文档定向核对。
-last_verified_ref: 756808484cd54ad1a5d49ff1f082eca5ca371b57
+last_verified_ref: 1ce89fb0bafdb2ce3f8befc5e18fb5e6d8bcf061
 architect_control:
   status: ACTIVE
   holder: current-chat
