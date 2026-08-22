@@ -1,3 +1,3 @@
 # 当前任务
 
-- TASK-0002 | BLOCKED_RELEASE_API | Architect | main | revision 1 | 仓库/审计/发布包已完成，等待可用的 GitHub Release 创建能力
+- TASK-0003 | READY_FOR_AGENT | BUILDER | build/task-0003-dispatch-guard | revision 1 | Chat 开发禁区、Agent 分发机制、安装说明与 v1.1.0 资源包
