@@ -3,7 +3,7 @@
 schema_version: 1
 repository: rhyanghk/Chat-Git-Agent
 default_branch: main
-last_verified_ref: 1ce89fb0bafdb2ce3f8befc5e18fb5e6d8bcf061
+last_verified_ref: 6a737b18204b6336f3be99df93dfa19c5aaafe89
 context_paths:
   - .ai/context/PROJECT.md
   - .ai/context/ARCHITECTURE.md

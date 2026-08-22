@@ -1,26 +1,25 @@
 # 当前结构
 
-状态：当前项目结构说明。
-last_verified_ref: 1ce89fb0bafdb2ce3f8befc5e18fb5e6d8bcf061
+状态：derived snapshot
+last_verified_ref: 6a737b18204b6336f3be99df93dfa19c5aaafe89
 
 ## 本项目自己的文件
 
 ```text
 README.md
-使用.md
-检查清单.md
-聊天端/
-执行端/
-项目接入/
-维护/
+INSTALL.md
+USAGE.md
+LICENSE
+chat/
+agent/
+maintenance/
 .ai/
 ```
 
-- `聊天端/`：给聊天项目安装的长期规则。
-- `执行端/`：给执行工具用户目录安装的通用规则和角色规则。
-- `项目接入/`：说明普通业务项目第一次如何由聊天端建立 `.ai/`。
-- `维护/`：只服务 Chat-Git-Agent 自身更新，不进入业务项目。
-- `.ai/`：只记录 Chat-Git-Agent 自己的当前项目状态。
+- `chat/`：给 Chat 安装的长期规则。
+- `agent/`：给 Agent 用户环境安装的通用规则和角色规则。
+- `maintenance/`：只服务 Chat-Git-Agent 自身更新和审计，不进入业务项目或 Release 包。
+- `.ai/`：只记录 Chat-Git-Agent 自己的项目状态。
 
 ## 业务项目结构
 
@@ -29,18 +28,20 @@ README.md
 ## 数据流
 
 ```text
-人的要求
-→ 聊天端
+用户要求
+→ Chat
 → 业务项目 .ai/tasks/TASK-xxxx.md
-→ 执行端启动提示
-→ 执行端本地执行
+→ 最短 Agent 启动提示
+→ Agent 本地执行
 → .ai/reports/结果文件
-→ 聊天端验收
+→ Chat 验收
 → 必要时更新 .ai/context 与 CURRENT.md
 ```
 
-GitHub 如果存在，只负责把同一套项目文件在设备之间同步和保留版本。
+GitHub 如果存在，只负责同步、精确版本和可恢复引用，不是执行前提。
 
 ## 当前风险
 
-- 后续跟随原项目更新时，需要先比较精确提交并人工判断哪些变化应吸收，不能自动覆盖本项目固定边界。
+- 主流 Chat/Agent 的产品安装入口可能变化，`INSTALL.md` 必须按官方资料定期核验。
+- 跟随原项目更新时必须比较 exact commit 并手动审计，不能自动覆盖本项目固定边界。
+- GitHub Release 发布动作取决于当前连接是否提供对应 API 能力。
