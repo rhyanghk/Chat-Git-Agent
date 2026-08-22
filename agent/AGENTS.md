@@ -4,21 +4,9 @@
 
 ## 1. 规则文件位置
 
-安装后的统一规则位置：
+不存在适用于所有 Agent 平台的统一实际安装目录。运行时必须读取“当前 Agent 平台已经安装的通用规则”以及 Chat 启动提示所指定的当前角色规则；具体目标目录、文件名或 UI 入口由该平台决定，见仓库根目录 `INSTALL.md`。
 
-macOS / Linux：
-
-```text
-~/.chat-git-agent/agent/AGENTS.md
-~/.chat-git-agent/agent/roles/<ROLE>.md
-```
-
-Windows：
-
-```text
-%USERPROFILE%\.chat-git-agent\agent\AGENTS.md
-%USERPROFILE%\.chat-git-agent\agent\roles\<ROLE>.md
-```
+如果当前平台没有提供角色规则的自动发现机制，必须按该平台支持的导入、指令文件或任务提示方式显式提供匹配的 `agent/roles/<ROLE>.md`。不能假定 `roles/*.md` 会被自动读取，也不能因为文件不可访问而猜测内容。
 
 开始任务时读取：
 
@@ -79,6 +67,19 @@ BOOTSTRAP_CHECK
 
 时，只执行本节七项开工检查并返回结果；不执行任务、不修改项目。
 
+### Remote Sync Gate
+
+当任务使用 GitHub 或其他远端 Git 时，必须把远端刷新作为实现或验证前置门槛。fresh、resume、VERIFIER、REPAIR 在进入实现/验证前必须：
+
+1. fetch/refresh 远端 refs，不以本地分支“看起来最新”作为事实源；
+2. 记录 live default branch、live main、当前 TASK 的 task_ref、任务指定的 target/work refs 和本地 HEAD；
+3. 核对 task_ref 可解析、live main 包含当前任务 revision，并解释远端与本地的差异；
+4. 在远端不可刷新时报告 BLOCKED_REMOTE_SYNC；task/ref 或 live main 发生无法安全解释的漂移时报告 BLOCKED_REMOTE_DRIFT；
+5. fresh 从刷新后的 live main 建立隔离工作分支；resume 先比较上次记录的 refs 再继续；
+6. VERIFIER 和 REPAIR 只能以刷新后可解析的远端对象作为验证/修复基线，并把 remote_main_checked、task_ref_checked、target_ref_checked 等证据写入报告。
+
+没有同步证据不得进入实现或验证。同步成功不产生任何 push、PR、merge、deploy 或 release 授权。
+
 ## 3. fresh 与 resume
 
 `startup_mode: fresh`：按上面的最小读取集合启动。
@@ -97,6 +98,16 @@ BOOTSTRAP_CHECK
 - 本地完成并验证后，只有任务和用户授权明确允许时才提交或推送。
 - 不自行 merge、deploy、release、force push、重写历史、删除其他协作者分支或绕过保护规则。
 - 需要写远端时，先核对 live ref；写后回读并报告 exact commit/ref。
+
+### Remote Action Gate
+
+在任何 push、open PR、merge、deploy 或 release 前，先读取当前 TASK 的 remote_actions。TASK 缺少 remote_actions、动作字段缺失或值不明确时，该动作默认 forbidden；工具可用、工作分支存在、测试/验收 PASS 或其他动作 allowed 都不能推导缺失动作的授权。
+
+- push_work_branch: allowed 只允许当前 TASK 指定的 work branch；push 前再次 refresh 远端并比较该分支的 live ref。存在未解释推进时停止，不 force、不写默认分支、不写其他分支、不重写历史、不删除 ref。push 后回读远端 exact ref。
+- open_pr: allowed 只允许当前 TASK 的 work branch 到指定 base 的 PR，不自动授权 merge。
+- merge、deploy、release 对 BUILDER、REPAIR、RESEARCH、VERIFIER、ARCHITECT 永久禁止；即使 TASK 错误写为 allowed 也必须停止并报告权限冲突。
+- 只有 RELEASE 角色可以进入 merge/deploy/release 阶段，而且必须同时满足当前 RELEASE TASK 的对应 remote_actions、Chat 根据用户明确指令写入的 user_authorized_actions、Chat 记录的 accepted_work_ref/accepted release target、Remote Sync Gate、live refs 一致和保护规则要求。merge 与 release 是独立授权。
+- merge 后回读 default branch exact ref；release 前以回读后的 live release target 再核对版本、tag、包/manifest/hash 和授权，发布后回读 Release/tag/asset。accepted_work_ref 只表示内容已验收，不等于 merge 或 release 授权。
 
 没有 GitHub 时，直接在被授权的本地项目副本执行，流程不降级。
 
