@@ -69,3 +69,13 @@
 影响：`agent/AGENTS.md` 只描述逻辑读取顺序，不硬编码所有平台共用的安装目录；`INSTALL.md` 逐平台给出“源文件 → 官方目标位置/UI”，并说明角色文件如何被该平台使用。平台不原生支持多角色自动发现时必须明确说明，不能假定 `roles/*.md` 会自动加载。
 
 来源：用户于 2026-08-22 明确要求。
+
+## D-008
+
+决定：任何使用 GitHub/远端 Git 仓库的 Agent，在 `fresh`、`resume`、`VERIFIER` 或 `REPAIR` 开工前都必须先刷新远端引用，并核对 live default branch、`task_ref`、任务要求的 target/work refs 与本地状态；没有远端同步证据不得进入实现或验收。
+
+理由：本地 checkout 可能落后于云端。只读取旧本地分支会让 Agent 在过时事实上实现或验证，产生“过程正确、对象错误”的结论。
+
+影响：`agent/AGENTS.md` 必须加入 Remote Sync Gate；`chat/CHAT_CORE.md` / `USAGE.md` 明确 GitHub 任务的开工与验收都要基于刷新后的远端 refs。同步失败时报告 `BLOCKED_REMOTE_SYNC`；发现 task/ref 漂移无法安全解释时报告 `BLOCKED_REMOTE_DRIFT`。Agent 报告应记录本轮核验使用的 live remote refs。
+
+来源：用户于 2026-08-22 在 TASK-0004 验收后明确指出 Verifier 未先拉取云端更新。
