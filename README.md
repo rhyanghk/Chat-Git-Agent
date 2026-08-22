@@ -11,6 +11,41 @@ Chat-Git-Agent 是一套简单的长期协作规则：**Chat 负责理解、安�
 5. **用户拥有最终决定权。** 目标、优先级、验收标准、风险接受、合并和发布由用户决定。
 6. **证据高于自评。** 实际差异、测试、构建、检查和精确版本强于 Agent 的自然语言评价。
 7. **只读当前任务需要的内容。** 不为了“可能有用”扫描全部历史。
+8. **Chat Write Guard。** 在业务项目中 Chat 只允许写 `.ai/**`；越界请求必须报告 `BLOCKED_CHAT_WRITE_SCOPE` 并形成正式 TASK 派 Agent。
+9. **Dispatch Gate。** TASK 写入并回读、取得 Git exact `task_ref`（使用 Git 时）、输出派发卡和最短提示后，Chat 进入 `WAIT_AGENT_RESULT`，不继续该 TASK 的产品开发。
+
+## Remote Sync Gate 与远端动作权限
+
+使用 GitHub 的 TASK 必须在 fresh、resume、VERIFIER、REPAIR 开工前刷新远端，核对 live main、task_ref、target/work refs 和本地状态。无法刷新报告 BLOCKED_REMOTE_SYNC；无法解释的 task/ref 或远端漂移报告 BLOCKED_REMOTE_DRIFT。
+
+TASK 必须显式声明 remote_actions：push_work_branch、open_pr、merge、deploy、release。字段缺失默认 forbidden，五项权限互相独立；push 只允许指定工作分支的非 force 写入。非 RELEASE 角色不得 merge、deploy、release。ACCEPTED_WORK_REF 只表示内容验收，不自动授予 merge/release；merge 与 release 必须分别由用户授权并由 RELEASE TASK 执行。
+
+## Chat 与 Agent 的职责边界
+
+Chat 负责理解目标、写任务合同、选择角色、派发、验收和保存 `.ai/**` 记录。Agent 负责在隔离工作区落实已明确的任务并报告实际结果。Chat 不直接修改业务项目的产品文件、代码、配置、测试或项目文档；这些内容必须由被派发的 Agent 修改。
+
+一次派发的最小流程是：
+
+```text
+写 TASK → 回读 TASK → 使用 Git 取得 exact task_ref（如适用）
+→ 输出用户派发卡和最短 Agent 提示 → WAIT_AGENT_RESULT
+→ 读取报告/diff/验证证据 → Chat 验收
+```
+
+`WAIT_AGENT_RESULT` 期间 Chat 可以读取状态、回答用户和维护 `.ai/**`，但不能继续同一 TASK 的设计、实现、代码、配置、测试或产品文档修改。
+
+## 角色选择
+
+| 未解决的问题或阶段 | 角色 |
+| --- | --- |
+| 事实、原因、官方资料或可选方案不清 | `RESEARCH` |
+| 技术设计、影响、接口、数据流、迁移或实现拆分不清 | `ARCHITECT` |
+| 方案和验收已经明确，需要落实文件或代码 | `BUILDER` |
+| 已确认故障，需要按边界修复 | `REPAIR` |
+| 实现完成，需要独立验收 | `VERIFIER` |
+| 已验收版本需要准备或执行发布 | `RELEASE` |
+
+`ARCHITECT` 默认只输出设计报告，不实现业务代码；`BUILDER` 才落实明确实现。角色规则的实际安装目录或 UI 入口由具体 Agent 平台决定，见 [`INSTALL.md`](INSTALL.md)，不存在所有平台共用的规则目录。
 
 ## 仓库结构
 

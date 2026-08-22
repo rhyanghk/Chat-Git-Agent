@@ -4,14 +4,42 @@
 
 ```text
 用户提出目标和边界
-→ Chat 把正式要求写进项目 .ai/tasks/TASK-xxxx.md
+→ Chat 只在项目 .ai/** 内写正式 TASK
+→ Chat 回读 TASK，使用 Git 时取得 exact task_ref
 → Chat 选择最少够用的 Agent 角色
-→ Chat 生成最短启动提示
+→ Chat 输出五项用户派发卡和最短启动提示
+→ Chat 进入 WAIT_AGENT_RESULT，不继续该 TASK 的产品开发
 → Agent 读取通用规则、角色规则、任务和必要项目文件
 → Agent 在本地执行并写 .ai/reports/...
 → Chat 根据实际改动和验证证据验收
 → 只有长期仍有价值的事实和决定才进入 .ai/context/
 ```
+
+## Chat Write Guard
+
+在业务项目中，Chat 的写入白名单只有 `.ai/**`。Chat 可以读取其他路径核验事实，但不得直接修改 `.ai/**` 之外的产品文件、代码、配置、测试或项目文档；也不能用终端、脚本或其他工具绕过边界。
+
+如果目标需要产品文件改动，Chat 先建立正式 TASK 并派 Agent。越界写入请求停止并报告：
+
+```text
+BLOCKED_CHAT_WRITE_SCOPE
+```
+
+## Dispatch Gate 与 WAIT_AGENT_RESULT
+
+正式派发前，Chat 必须写入并回读 `.ai/tasks/TASK-xxxx.md`，核对 revision、角色、基线、范围、禁止事项、验收条件和报告位置。使用 Git 时还必须取得包含该 revision 的 exact `task_ref`；不能猜测或沿用旧 ref。
+
+随后 Chat 只输出五项用户派发卡：
+
+```text
+任务：
+为什么做：
+Agent 要做什么：
+调度建议：
+本轮终点：
+```
+
+并输出只负责定位的最短 Agent 提示。派发完成后状态为 `WAIT_AGENT_RESULT`；在 Agent 报告返回前，Chat 不能继续该 TASK 的设计、实现、代码、配置、测试或产品文档修改。Chat 只能读取状态、回答用户、维护 `.ai/**` 和准备验收。
 
 ## 第一次接入业务项目
 
@@ -91,12 +119,16 @@ Chat 或 Agent 的会话名称只用于用户导航，不是任务状态来源�
 
 ## Agent 角色
 
-- `BUILDER`：实现已经明确的改动。
-- `RESEARCH`：查清事实、原因和选择，默认不施工。
-- `REPAIR`：修复已经确认的问题。
-- `VERIFIER`：独立检查结果是否满足原任务。
-- `RELEASE`：核对发布条件和材料；只有用户明确授权才执行发布。
-- `ARCHITECT`：仅在 Chat 明确派发时协助项目结构或本地项目记录工作，不成为第二个主协调 Chat。
+按未解决的问题或阶段选择角色：
+
+- `RESEARCH`：事实、原因、官方资料或可选方案不清时查证，默认不施工。
+- `ARCHITECT`：事实已清楚但技术设计、影响、接口、数据流、迁移或实现拆分不清时，输出深入设计；默认不实现业务代码，也不成为第二主协调 Chat。
+- `BUILDER`：方案、范围和验收已经明确时落实文件或代码。
+- `REPAIR`：故障已经确认且修复边界可描述时，只修复该问题。
+- `VERIFIER`：实现完成后独立检查原任务、实际 diff 和验证证据，不顺手修改。
+- `RELEASE`：版本已验收后核对发布材料；没有用户明确授权只准备，不正式发布。
+
+角色规则不是跨平台统一目录。按具体 Agent 平台的官方入口安装通用规则，并按任务显式提供匹配角色文件，详见 [`INSTALL.md`](INSTALL.md)。
 
 命令、脚本、CI 或其他自动化工具只是执行工具，不拥有需求、验收、合并或发布决定权。
 
@@ -154,6 +186,36 @@ Chat 或 Agent 的会话名称只用于用户导航，不是任务状态来源�
 
 缺少交出记录、恢复核对、用户确认或接任确认中的任一项时，保持 `BLOCKED`，不形成两个主协调者。
 
+## Remote Sync Gate 与远端权限阶段
+
+GitHub TASK 在 fresh、resume、VERIFIER、REPAIR 开工前都必须刷新远端 refs，并记录 live default branch、live main、task_ref、target/work refs 和本地 HEAD。无法刷新报告 BLOCKED_REMOTE_SYNC；task/ref 或远端分支发生无法安全解释的漂移报告 BLOCKED_REMOTE_DRIFT。没有同步证据不能实现或验收。
+
+GitHub TASK 必须显式写出 remote_actions：
+
+    remote_actions:
+      push_work_branch: allowed | forbidden
+      open_pr: allowed | forbidden
+      merge: allowed | forbidden
+      deploy: allowed | forbidden
+      release: allowed | forbidden
+    user_authorized_actions: []
+
+字段缺失或值不明确默认 forbidden。push、open PR、merge、deploy、release 相互独立；push_work_branch 只允许当前 TASK 指定工作分支的非 force push。非 RELEASE 角色不得 merge、deploy、release。ACCEPTED_WORK_REF 只代表内容验收，不自动授予 merge/release；merge 与 release 需要分别由用户授权并由 RELEASE TASK 执行。
+
+阶段门顺序：
+
+    实现/验证
+    → push work branch（仅 TASK 明确允许时）
+    → Chat 内容验收并记录 ACCEPTED_WORK_REF
+    → 用户明确 merge 授权
+    → RELEASE TASK merge
+    → 回读 main exact ref
+    → 用户明确 release 授权
+    → RELEASE TASK release
+    → 回读 release/tag/asset/hash
+
+任何阶段缺少对应 allowed、user_authorized_actions、accepted/live refs、保护规则检查或写后回读，都停止并报告权限冲突或 BLOCKED。
+
 ## GitHub 怎么用
 
 GitHub 只用于同步和版本记录。
@@ -163,8 +225,8 @@ GitHub 只用于同步和版本记录。
 1. Agent/Chat 写入前读取当前 branch/ref 和相关文件版本；
 2. 执行工作先同步到本地；
 3. 本地完成并验证；
-4. 只有任务和用户授权允许时才 push / merge / release；
+4. 按 TASK 的 remote_actions 和角色权限决定是否 push/open PR；非 RELEASE 不执行 merge/deploy/release；
 5. 不 force、不绕过分支保护；
-6. 写入后回读，返回 exact commit/ref。
+6. 每次写入后回读，返回 exact commit/ref；merge 后回读 main，release 后回读 Release/tag/asset。
 
 没有 GitHub 时，本地流程完全不变，只少远端同步步骤。
