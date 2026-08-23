@@ -1,49 +1,16 @@
-> **适配状态：PROFILE-0001。** 本文件完整保留原始方法论的结构与内容连续性，
-> 但其现行解释以 `CONSTITUTION.md`、`docs/AGENT_INTERFACE.md`、
-> `30_PROTOCOLS/CONTROL_RECORDS.md`、`30_PROTOCOLS/GITHUB_RELAY_PROTOCOL.md` 为准。
-> 本仓不把 GitHub 设为所有项目的强制事实源；不使用内容哈希或防御性写入；
-> Chat 控制与 Agent 执行严格分离。
+# 开工检查请求
 
-# Bootstrap Check Request — 初始化状态检查请求（Human 触发）
+用于 Human 要求 Agent 只确认当前是否可以开始，不执行任务、不修改项目、不补充历史。
 
-**分层**: Human 层（请求 Agent 执行初始化状态检查）
-**分类**: L2 Targeted Reference · 50_TEMPLATES
-
-| 项 | 内容 |
-| --- | --- |
-| 用途 | Human 请求 Agent 执行一次初始化状态检查，确认当前启动状态是否就绪 |
-| 谁使用 | Human（向 Agent 发起）；执行 Agent 接收并执行 Bootstrap Check |
-| 什么时候使用 | 首次进入、跨设备/会话恢复、或怀疑当前状态与 durable source 不一致时 |
-| 触发文本 | `BOOTSTRAP_CHECK` |
-| 禁止用途 | 不补充历史上下文；不执行任务；不修改文件；只验证当前初始化状态 |
-
-## 要求
-
-- 不补充历史上下文；
-- 不执行任务；
-- 不修改文件；
-- 只验证当前初始化状态。
-
-## 触发文本
-
-```text
-BOOTSTRAP_CHECK
-```
-
-## 完成后
-
-生成 `BOOTSTRAP_CHECK_REPORT`，并**回写 durable source**（当前 authority issue / dispatch comment）。
-
-## 填空模板
-
-```text
+~~~text
 BOOTSTRAP_CHECK
 ---
-source: <durable source pointer>
-startup_mode: <Fresh Role / Warm Resume>
-```
+task: <TASK-xxxxxx-Rxxx | none>
+role: <assigned role>
+authority_store: <one formal location>
+startup_mode: <fresh | resume>
+report: <one formal result location | chat only when no formal task exists>
+~~~
 
-## 规范源
+检查固定七项：角色、入口、授权、访问、当前任务、边界和当前状态。任一项不能确认时返回 `BLOCKED` 和缺失项；通过时只写检查结果，不开始实施。详见 `10_BOOT/BOOTSTRAP_CHECK_PROTOCOL.md`。
 
-- `10_BOOT/BOOTSTRAP_CHECK_PROTOCOL.md`（固定检查项、可回写要求）
-- `30_PROTOCOLS/DURABLE_TRACE_PRINCIPLE.md`（只存在聊天的确认不算数）
