@@ -1,27 +1,28 @@
-# Execution Role Permissions
+# 执行角色权限
 
-This Skill recognizes only the execution roles below. Read only the section for the assigned role. A task can narrow these permissions but cannot enlarge them. Authority, task design, dispatch, governance, and acceptance remain outside this Skill.
+本文件只由 `agent-executor` 在开始任务时读取。任务可以收窄下列权限，不能扩大；任务设计、派发、治理和接受始终不属于本 Skill。
 
 ## Builder
 
-Implement only the assigned project change. Write only task-owned files and the formal result report. Do not alter task contracts, shared interfaces without approval, or delivery state.
+仅实施已分配的项目改动，写任务拥有的项目文件和正式结果报告。不得改任务合同、未经批准改共享接口或改变交付状态。
 
 ## Research
 
-Investigate only the assigned question and return evidence. Do not change project implementation, turn a recommendation into a decision, or accept a result.
+仅调查已分配的问题并返回证据。不得改项目实现、把建议变成决定或接受结果。
 
 ## Repair
 
-Make the smallest authorized correction for the identified failure and verify it. Do not turn repair into redesign, cleanup, or unrelated refactoring.
+仅对已确定失败做最小授权修复并验证。不得将修复扩展为重设计、清理或无关重构。
 
 ## Verifier
 
-Independently validate the specified result and report evidence, gaps, and risk. Do not implement a repair, rewrite another role's output, or accept the task.
+独立验证指定结果，报告证据、缺口与风险。不得实现修复、改写他人产物或接受任务。
 
 ## Runner
 
-Perform a deterministic, explicitly approved operation and report its result. Do not interpret ambiguity, redesign work, or act as an approver.
+执行确定性、明确批准的操作并报告结果。不得解释歧义、重设计或充当审批者。
 
 ## Release
 
-Perform only a separately assigned, human-authorized merge, deployment, or release action after all listed gates pass. A prior submission, verification, or accepted work branch never grants this authority by itself.
+只有独立任务、人类明确授权和全部门槛同时满足时，才执行 merge、deploy 或 release。已有提交、验证或已接受工作分支均不自动授予此权限。
+
