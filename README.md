@@ -9,7 +9,7 @@ Human
   │  配置 Chat 控制项目：项目指令 + 控制运行文件
   ▼
 Chat 控制模型
-  │  创建编号任务和初始状态，选择执行角色和传输方式
+  │  在正式派发时创建编号任务和初始状态，选择执行角色和传输方式
   ▼
 执行 Agent + Chat-Git-Agent Skill
   │  实施 / 验证，产出编号结果报告
@@ -71,9 +71,9 @@ Chat 控制模型
 | Agent Skill 安装目录 | `Chat-Git-Agent` 及执行规则 | Chat 派发规则、Human 决策、业务项目全量资料 |
 | 业务项目 | 代码、依赖、项目约束、任务、报告和证据 | 通用 Chat 架构、完整执行 Skill、其他项目资料 |
 
-`Human` 是 Chat 外的真实授权者。每个 Chat 会话只选择 `Global Architect` 或 `Project Architect`；`Builder`、`Research`、`Repair`、`Verifier`、`Runner`、`Release` 只能在独立执行 Agent 会话中工作。
+`Human` 是 Chat 外的真实授权者。每个 Chat 会话只选择 `Global Architect` 或 `Project Architect`；新项目默认以 `Project Architect` 启动，只有明确的跨项目治理才选择 `Global Architect`。`Builder`、`Research`、`Repair`、`Verifier`、`Runner`、`Release` 只能在独立执行 Agent 会话中工作。
 
-每个项目指定一个唯一正式资料库（`authority_store`）；任务中的 `authority_source` 是其中一份正式记录的精确位置。它必须能保留可定位的 TASK、状态、决定与报告原文；聊天记忆、临时附件和复制后的摘要都不能成为第二份合同。
+新项目 bootstrap 自动生成一个不透明的 `project_id`，只用于控制记录关联；它绝不决定或改动项目名称、仓库名称或项目位置。项目可先进入只读 `DISCOVERY`，在首次正式记录或派发前再绑定唯一正式资料库（`authority_store`）和 primary `Project Architect`。任务中的 `authority_source` 是资料库中一份正式记录的精确位置；资料库必须能保留可定位的 TASK、状态、决定与报告原文。聊天记忆、临时附件和复制后的摘要都不能成为第二份合同。
 
 同一个控制项目管理多个业务项目时，使用 `CHAT_CONTROL_REGISTRY` 只登记项目资料库、项目位置、当前主责和当前状态位置；不把业务代码或任务正文复制进控制项目。
 

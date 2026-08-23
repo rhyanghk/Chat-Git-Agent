@@ -9,7 +9,7 @@
 1. 将 [PROJECT_INSTRUCTIONS.md](CHAT_CONTROL/PROJECT_INSTRUCTIONS.md) 的正文放入平台的项目指令、Custom Instructions 或等价位置。
 2. 将 [CONTROL_RUNTIME.md](CHAT_CONTROL/CONTROL_RUNTIME.md) 作为项目静态资料上传或提供。它包含控制角色、完整任务流程和所有正式记录格式。
 
-再为每个业务项目指定一个唯一 `authority_store`：数据库、受控文档库、项目版本库或其他 Human 能定位的正式记录位置。它至少要能保存可定位的 TASK、TASK-STATE、DECISION、REPORT 与交接记录原文，并说明 Chat、Human 和 Agent 的读写方式。不要把业务代码、当前任务、报告或完整 Agent Skill 上传为 Chat 项目的固定资料。若该 Chat 没有资料库读写权限，Human 原样记录 Chat 输出的正式记录，再把精确位置（以及读不到时的原样副本）交回当前会话。
+为每个业务项目准备一个唯一 `authority_store`：数据库、受控文档库、项目版本库或其他 Human 能定位的正式记录位置。它在首次正式 TASK、TASK-STATE、DECISION、REPORT 或交接前必须绑定；新项目的只读发现与架构草案阶段可先为 `pending`。资料库至少要能保存可定位的正式记录原文，并说明 Chat、Human 和 Agent 的读写方式。不要把业务代码、当前任务、报告或完整 Agent Skill 上传为 Chat 项目的固定资料。若该 Chat 没有资料库读写权限，Human 原样记录 Chat 输出的正式记录，再把精确位置（以及读不到时的原样副本）交回当前会话。
 
 一个控制项目管理两个或以上业务项目时，在同一正式资料库建立 `CHAT_CONTROL_REGISTRY`；它只登记每个项目的资料库、项目位置、当前主责和当前状态位置。
 
@@ -25,18 +25,18 @@ ChatGPT Web Project 的项目指令会应用于该 Project 的会话，**Sources
 ### Chat 启动卡
 
 ```text
-当前模型角色: <Global Architect | Project Architect>
-当前项目: <PROJECT-0001>
-authority_store: <唯一正式资料库的 URL、路径、名称或查询方式>
-authority_access: <Chat read/write | Chat read only | Human recording | other exact condition>
+新项目显示名: <optional Human-controlled label or none>
+项目位置: <optional exact repository or path, or none>
+authority_store: <exact formal location or pending>
+authority_access: <Chat read/write | Chat read only | Human recording (default) | other exact condition>
 当前事项: <TASK、TASK-STATE、DECISION、项目记录，或 none>
 
-请先读取 CONTROL_RUNTIME.md，再按其中流程处理当前事项；缺少角色、项目、资料库、指针或访问时只返回 BLOCKED 和缺失项。
+请先读取 CONTROL_RUNTIME.md。新项目自动以 Project Architect、自动生成的不透明 project_id 和 DISCOVERY 启动；project_id 不影响项目名称、仓库名称或项目位置。资料库、正式 primary claim、项目位置和项目规则只在正式记录或派发前绑定。
 ```
 
 ## 2. 从 Chat 派发到 Agent，再回到 Chat
 
-1. Human 用启动卡建立 Chat 控制会话；Chat 按 `CONTROL_RUNTIME.md` 创建 `CHAT_CONTROL_BOOTSTRAP`、编号 `TASK` 和初始 `TASK-STATE`。
+1. Human 用启动卡建立 Chat 控制会话；Chat 按 `CONTROL_RUNTIME.md` 自动创建 `Project Architect / DISCOVERY` 的 `CHAT_CONTROL_BOOTSTRAP`。这一步生成控制用 `project_id`，但不影响项目名称、仓库名称或项目位置；没有实际任务时不创建 TASK 或 TASK-STATE。
 2. Chat 为每个执行角色创建独立任务。任务明确写 `project_location`、`project_rules`、`transport: local`、`github_relay` 或 `human_copy`。
 3. Human 启动一个装有 `Chat-Git-Agent` 的独立 Agent 会话：
    - Agent 可读取 `authority_source` 时，只复制控制运行文件中的完整 `SEED-TASK-...`；
@@ -128,7 +128,7 @@ github_task_location: none
 
 在真实业务任务前，使用一个可丢弃的测试项目完成一次最小闭环：
 
-1. 建立 Chat 控制项目，原样记录 `CHAT_CONTROL_BOOTSTRAP`，并确认 `authority_store` 的读写方式。
+1. 建立 Chat 控制项目，确认它以 `Project Architect / DISCOVERY` 和自动生成的 `project_id` 启动；确认该 ID 不改变项目名称、仓库名称或项目位置。首次正式任务前，再绑定 `authority_store` 并确认读写方式。
 2. 创建一份仅执行 `BOOTSTRAP_CHECK` 的 Runner TASK：必须写明 `project_location`、`project_rules`、REPORT 位置和 `transport`。Agent 返回或写入完整 REPORT。
 3. 创建一份只读 Research 或 Verifier TASK，确认 Agent 能读取任务、项目规则和正式资料，但不会把聊天内容当合同。
 4. 创建一份范围极小的 Builder TASK，在隔离副本内完成可观察改动并提交 REPORT；Chat 记录 REPORT 后，Human 写入 `DECISION` 与新的 `TASK-STATE`。

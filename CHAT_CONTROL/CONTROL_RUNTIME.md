@@ -10,9 +10,17 @@
 | `Global Architect` | 跨项目规则、共享接口、术语和治理冲突收敛 | 代替 Human 决策、创建单项目执行 TASK、默认施工或验收 |
 | `Project Architect` | 单项目任务拆分、revision、边界、派发和结果收敛 | 扩大 Human 授权、最终验收或发布 |
 
-一个 Chat 会话只选择一个模型控制角色；切换角色时开新会话并重新提供启动卡。执行角色只能在独立 Agent 会话中工作。每个项目同一时刻只能有一个 primary `Project Architect`；交接被正式接受前，旧主责不得继续派发或改写项目状态。
+一个 Chat 会话只选择一个模型控制角色；切换角色时开新会话并重新提供启动卡。新项目默认以 `Project Architect` 启动；只有 Human 明确指定跨项目治理时才使用 `Global Architect`。执行角色只能在独立 Agent 会话中工作。每个项目同一时刻只能有一个 primary `Project Architect`；交接被正式接受前，旧主责不得继续派发或改写项目状态。
 
-### 1.1 权威优先级与冲突
+### 1.1 新项目默认启动
+
+新项目启动时，Chat 自动生成一个不透明的 `project_id`，并建立 `CHAT_CONTROL_BOOTSTRAP` 的默认值。`project_id` 只用于控制记录、关联和唯一性：不得从项目名称、仓库名称或项目位置派生，也不得用于推导、选择、重命名、移动、创建或 fork 项目仓库。`project_name` 与 `project_location` 是独立字段，允许为 `none`。
+
+默认角色为 `Project Architect`，默认 `authority_access` 为 `Human recording`，默认 `current_record` 为 `none`。资料库尚未绑定时，`authority_store: pending` 和 `status: DISCOVERY` 允许 Chat 读取 Human 已授权的材料、澄清需求并提出非权威的系统架构草案；不得派发 Agent、声称已写入正式记录、创建正式 TASK、TASK-STATE、DECISION 或接受结果。
+
+若已绑定且可写的 `authority_store` 支持原子写入，Chat 在 bootstrap 中自动写入 primary claim；否则返回完整、可记录的 bootstrap revision 供 Human 原样记录。claim 未正式生效或发生冲突时，Chat 保持 `DISCOVERY` 或 `BLOCKED`，不得以 primary `Project Architect` 身份派发。资料库、项目位置和项目规则只在首次正式记录或执行 TASK 前必须精确绑定；缺失时不阻止上述只读发现工作。
+
+### 1.2 权威优先级与冲突
 
 从高到低只按下列正式来源判断：
 
@@ -25,13 +33,13 @@
 
 低层内容不能覆盖高层内容。当前 TASK 与项目规则、正式决定或项目状态冲突时，Chat 创建完整 `CHANGE` 请求或 `DECISION` 草案，等待有权者写入正式资料库；不得在聊天中静默解释、改写合同或继续派发。
 
-### 1.2 最低足够验证
+### 1.3 最低足够验证
 
 - 低风险且边界清晰：Project Architect 可依据机器证据收敛，不强制派 Verifier。
 - 普通复杂或高风险：最多派一名 fresh、独立的 Verifier；其 TASK 必须指向待验证结果，而不是 Builder 自评。
 - 只有真实系统失效、权限失效、状态不可恢复、无法解释的正式事实冲突、secret 泄漏、制度性重复执行或 Human 明确事故调查时，才可由 Human 或 Global Architect 用正式 `DECISION` 进入 `incident_mode` 并扩大验证。
 
-### 1.3 Global Architect 的维护边界
+### 1.4 Global Architect 的维护边界
 
 Global Architect 可在读取当前正式资料后整理低风险、非行为性的跨项目术语、索引、规则说明和已生效决定；必须留下正式 `DECISION` 或其精确位置。涉及业务代码、权限/安全边界、生命周期行为、共享机器合同、自动化行为或项目任务时，必须交给对应 Project Architect 与 Human，不得绕过任务流程。
 
@@ -47,7 +55,7 @@ Global Architect 可在读取当前正式资料后整理低风险、非行为性
 4. 记录谁可写入、谁负责原样记录，以及当前 Chat / Agent 是否可读写；
 5. 不以内容哈希、聊天摘要、临时副本或隐藏记忆充当第二份合同。
 
-若当前 Chat 不能写入资料库，它必须返回完整记录，由 Human 原样写入；在 Human 给出精确位置前，该记录不是正式记录。若 Human 在聊天补充本应正式化的范围、验收、决定或授权，Chat 必须返回应写入的完整编号记录或 `CHANGE`，不能把补充直接并入既有合同。
+若当前 Chat 不能写入资料库，它必须返回完整记录，由 Human 原样写入；在 Human 给出精确位置前，该记录不是正式记录。新项目在 `authority_store: pending` 时仅处于 `DISCOVERY`，不因而阻止已授权材料的只读分析；首次正式记录、派发、状态变更或正式决定前必须绑定唯一资料库。若 Human 在聊天补充本应正式化的范围、验收、决定或授权，Chat 必须返回应写入的完整编号记录或 `CHANGE`，不能把补充直接并入既有合同。
 
 | `transport` | 任务交给 Agent | Agent 结果回到 Chat |
 | --- | --- | --- |
@@ -59,30 +67,40 @@ Global Architect 可在读取当前正式资料后整理低风险、非行为性
 
 ## 3. 全流程
 
-1. Human 使用 `CHAT_CONTROL_BOOTSTRAP` 明确控制角色、项目、资料库、资料库访问方式和当前事项。Chat 不能写入时，Human 先原样记录它并交回位置。
-2. Global Architect 先读取 `CHAT_CONTROL_REGISTRY`；Project Architect 读取当前项目的 active TASK-STATE、DECISION、REPORT 和任务点名资料，只恢复当前事实、冻结边界、风险和下一步；不扫描全部历史。
-3. Project Architect 为每个执行角色创建一份独立 TASK，并建立初始 `TASK-STATE`。合同变化创建新 revision；状态变化创建新的状态记录。Global Architect 只处理跨项目规则、接口或治理记录，不创建单项目执行任务。
-4. Human 按 `transport` 派发 Seed 或完整 TASK。需要开工检查或能力盘点时，仍使用完整、编号的 Runner TASK，其 `scope` 只能是对应检查。
-5. Agent 只完成该 TASK，输出或写入 REPORT。任何 `BLOCKED`、合同冲突、风险判断或实际改动必须落入 REPORT 或 CHANGE。
-6. Chat 从正式资料库读取 REPORT、验证与风险；若 Chat 没有读取权限，Human 提供 REPORT 的原样副本和正式位置。
-7. Human 决定接受、拒绝、变更、下一任务或发布授权。Chat 将该决定写为正式 DECISION，并创建对应 TASK-STATE；没有 Human 正式决定不得把报告称为已接受。
+1. 新项目的 Chat 自动建立 `CHAT_CONTROL_BOOTSTRAP`：生成不透明 `project_id`，以 `Project Architect` 和 `current_record: none` 启动，并将尚未提供的项目名称、位置、规则和资料库标为 `none` 或 `pending`。只有 Human 明确指定时才改为 `Global Architect`。
+2. `status: DISCOVERY` 时，Chat 只读取 Human 已授权的材料，整理需求、候选边界、风险和非权威架构草案；不扫描无关历史，也不派发或声称任何正式状态。
+3. Global Architect 先读取 `CHAT_CONTROL_REGISTRY`；已绑定正式资料库的 Project Architect 读取当前项目的 active TASK-STATE、DECISION、REPORT 和任务点名资料，只恢复当前事实、冻结边界、风险和下一步；不扫描全部历史。
+4. 首次正式记录或派发前，Project Architect 必须绑定唯一 `authority_store`、确认实际 `authority_access`，并使 primary claim 处于 `CLAIMED` 或 `RECORDED_BY_HUMAN`。随后为每个执行角色创建一份独立 TASK，并建立初始 `TASK-STATE`。合同变化创建新 revision；状态变化创建新的状态记录。Global Architect 只处理跨项目规则、接口或治理记录，不创建单项目执行任务。
+5. Human 按 `transport` 派发 Seed 或完整 TASK。需要开工检查或能力盘点时，仍使用完整、编号的 Runner TASK，其 `scope` 只能是对应检查。
+6. Agent 只完成该 TASK，输出或写入 REPORT。任何 `BLOCKED`、合同冲突、风险判断或实际改动必须落入 REPORT 或 CHANGE。
+7. Chat 从正式资料库读取 REPORT、验证与风险；若 Chat 没有读取权限，Human 提供 REPORT 的原样副本和正式位置。
+8. Human 决定接受、拒绝、变更、下一任务或发布授权。Chat 将该决定写为正式 DECISION，并创建对应 TASK-STATE；没有 Human 正式决定不得把报告称为已接受。
 
 ## 4. 固定记录格式
 
 ### Chat 控制项目启动
 
 ~~~text
-CHAT_CONTROL_BOOTSTRAP
+CHAT_CONTROL_BOOTSTRAP-<project_id>-R001
 ---
-project: PROJECT-0001
-human: <one real human authority>
-chat_role: <Global Architect | Project Architect>
-platform: <ChatGPT Web | Claude Web | Claude Code control workspace | Generic Chat>
-authority_store: <one exact formal location>
-authority_access: <Chat read/write | Chat read only | Human recording | other exact condition>
-current_record: <exact task, task state, decision, project record, or none>
-status: <READY | BLOCKED | WAITING_FOR_HUMAN>
+project_id: <opaque auto-generated control identifier>
+project_name: <Human-controlled label or none>
+project_location: <exact repository or path, or none>
+project_rules: <exact rules location or none>
+human: <current Chat owner or one real human authority>
+chat_role: <Project Architect by default | Global Architect only when explicitly selected>
+platform: <auto-detected platform or exact platform>
+authority_store: <one exact formal location | pending>
+authority_access: <Chat read/write | Chat read only | Human recording (default) | other exact condition>
+current_record: <exact TASK, TASK-STATE, DECISION, project record, or none>
+primary_project_architect:
+  holder: <current Chat identity or none>
+  claim: <CLAIMED | RECORDED_BY_HUMAN | PENDING_HUMAN_RECORDING | CONFLICT | NOT_APPLICABLE>
+  claim_source: <this bootstrap revision or exact prior accepted handoff location>
+status: <DISCOVERY | READY | BLOCKED | WAITING_FOR_HUMAN>
 ~~~
+
+`DISCOVERY` 是新项目的默认状态。它不要求已有项目名称、项目位置、项目规则、资料库位置或当前记录；但 `READY`、正式记录与 Agent 派发必须有精确 `authority_store`。`project_id` 不能改变或推导 `project_name`、仓库名称或 `project_location`。`authority_store: pending` 时 claim 必须为 `PENDING_HUMAN_RECORDING`；绑定资料库后，以新 bootstrap revision 原子确认 `CLAIMED`，或由 Human 原样记录为 `RECORDED_BY_HUMAN`。任何 bootstrap 字段或 claim 的变化都创建新 revision，不覆盖旧记录。
 
 ### 跨项目注册表
 
@@ -93,7 +111,8 @@ CHAT_CONTROL_REGISTRY-0001-R001
 ---
 authority_store: <one exact formal location>
 projects:
-  - project: PROJECT-0001
+  - project_id: <opaque control identifier>
+    project_name: <Human-controlled label or none>
     authority_store: <exact formal location>
     project_location: <exact location or repository>
     primary_project_architect: <current role holder or none>
@@ -101,14 +120,14 @@ projects:
 status: <READY | PARTIAL | WAITING_FOR_HUMAN | BLOCKED>
 ~~~
 
-每个项目必须显式注册；不得根据仓库名、Chat 名称或历史消息猜测项目归属。注册表只在正式资料库可定位后视为 `READY`。
+每个项目必须显式注册；不得根据仓库名、Chat 名称或历史消息猜测项目归属。注册表只在正式资料库可定位后视为 `READY`。`project_id` 是控制索引，不能影响项目名称、仓库名称或项目位置。
 
 ### 正式任务
 
 ~~~text
 TASK-000001-R001
 ---
-project: PROJECT-0001
+project_id: <opaque control identifier>
 project_location: <exact local path | repository URL and checkout location | Human-provided project source position>
 project_rules:
   - <exact AGENTS.md, README, contract, runbook, or none>
@@ -157,7 +176,7 @@ human_copy:
   record_writer: Human
 ~~~
 
-缺少的远端动作一律 `forbidden`。任何任务合同字段变化都必须创建新 revision，尤其是 project、project_location、project_rules、role、startup_mode、authority_source、baseline、human_authorization、transport、scope、forbidden、acceptance、inputs、report、stop、`github_relay` 区块或 `human_copy` 区块。
+缺少的远端动作一律 `forbidden`。任何任务合同字段变化都必须创建新 revision，尤其是 project_id、project_location、project_rules、role、startup_mode、authority_source、baseline、human_authorization、transport、scope、forbidden、acceptance、inputs、report、stop、`github_relay` 区块或 `human_copy` 区块。`project_id` 只关联控制记录，不能据此改动项目名称、仓库名称或项目位置。
 
 ### Human 派发卡
 
@@ -188,7 +207,7 @@ next_action: <one exact next action or none>
 ### 正式决定与 Human 授权
 
 ~~~text
-DECISION-PROJECT-0001-000001-R001
+DECISION-<project_id>-000001-R001
 ---
 authority: <Human | Global Architect | Project Architect>
 decision_type: <global_rule | project_rule | human_authorization | human_acceptance | incident_mode | conflict_resolution>
@@ -251,7 +270,7 @@ delivery_state: <WRITTEN_TO_AUTHORITY_STORE | RETURNED_FOR_HUMAN_RECORDING>
 CHANGE-TASK-000001-R001-001
 ---
 task: TASK-000001-R001
-requested_change: <project | project_location | project_rules | role | startup_mode | authority_source | baseline | human_authorization | transport | scope | forbidden | acceptance | inputs | report | stop | github_relay | human_copy>
+requested_change: <project_id | project_location | project_rules | role | startup_mode | authority_source | baseline | human_authorization | transport | scope | forbidden | acceptance | inputs | report | stop | github_relay | human_copy>
 reason: <short factual reason>
 impact: <what cannot safely continue>
 requested_next_revision: TASK-000001-R002
