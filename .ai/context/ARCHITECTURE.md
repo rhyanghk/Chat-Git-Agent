@@ -1,9 +1,11 @@
 # 当前结构与 Chat 架构基线
 
 状态：derived recovery snapshot + accepted architecture baseline
-last_verified_ref: 17b880fa6017c9105a30e33c67828620fb6e4900
+last_verified_ref: 4de4244bc022be10699a92356bf001326c684b25
 product_merge_ref: ac93e0676b6fb535c1c3c72d7300de6f9d3eab30
-architecture_decision: D-011
+architecture_decisions:
+  - D-011
+  - D-012
 
 > 本文件由主协调 Chat 维护，用于快速恢复当前架构事实与下一阶段实施规格。它不是面向最终用户的正式项目文档；正式 `docs/**` 由 Builder 按本基线实体化。架构判断和内容归 Chat，产品文件写入归被派发的 Agent。
 
@@ -71,12 +73,12 @@ maintenance/
   UPSTREAM.md
   AUDIT.md
   CHANGELOG.md
-  COLD_START.md          # 或同等 cold-start 验证入口，由 Builder 选择最简单实现
+  COLD_START.md
 release/
 .ai/
 ```
 
-`agent/roles/ARCHITECT.md` 应从可安装/可派发角色集合退役；是否直接删除由 Builder 根据引用清理结果执行，但最终产品不得再把它暴露成 Agent role。
+`agent/roles/ARCHITECT.md` 应从可安装/可派发角色集合退役；最终产品不得再把它暴露成 Agent role。
 
 ## 3. 业务项目 `.ai` 控制面目标
 
@@ -111,15 +113,22 @@ common_rule
 role_rule
 ```
 
-使用 Git/GitHub 时再包含：
+使用 Git/GitHub 时，dispatch artifact 再保存：
 
 ```text
 task_ref
-dispatch_ref
 common_rule_ref
 role_rule_ref
 access
 ```
+
+**exact dispatch pointer 不写入 dispatch 文件自身。** 根据 D-012，它由 minimal seed 或外部派发记录提供，例如：
+
+```text
+rhyanghk/project@<commit>:.ai/dispatch/TASK-0009-BUILDER.md
+```
+
+这是为了避免 commit SHA 的哈希自引用。
 
 要求：
 
@@ -127,7 +136,7 @@ access
 - GitHub 模式优先 exact `<repo>@<commit>:<path>`。
 - local-only 模式记录 Agent 环境中已安装规则的可解析绝对路径或平台原生 identifier，并记录本地核验标记；不能伪造 GitHub ref。
 - 业务项目中不复制通用 `AGENTS.md` 或 `roles/*.md`。
-- TASK 合同变化导致 revision+1 时，旧 dispatch 失效，必须产生新 dispatch/ref。
+- TASK 合同变化导致 revision+1 时，旧 dispatch 失效，必须产生新 dispatch/exact pointer。
 
 ## 5. Minimal Seed
 
@@ -144,7 +153,7 @@ Agent 启动路径：
 
 ```text
 Seed
-→ Durable Dispatch
+→ exact Durable Dispatch pointer
 → common rule + role rule
 → exact TASK revision
 → Bootstrap Check
@@ -171,7 +180,7 @@ Release Audit 不能再只检查“文档里写了这些规则”。新的 live 
 
 ```text
 只给 minimal seed
-→ 能读取 durable dispatch
+→ 能读取 exact durable dispatch pointer
 → 能取得 common rule + exact role rule
 → 能读取 exact TASK revision
 → 能完成 Bootstrap Check
@@ -225,19 +234,19 @@ Builder 应根据本 Chat 架构基线创建：
 - `maintenance/UPSTREAM.md`：更新作用映射和 intentional divergence。
 - `maintenance/AUDIT.md`：历史 PASS 与 live PASS 分离；无 fresh cold-start evidence 不得 PASS；加入 LICENSE 检查。
 - cold-start 验证入口/记录：提供明确的 fresh Agent 验证协议与 evidence pointer。
-- `release/v1.1.0` 或下一修复版本：manifest/ZIP 必须包含 `LICENSE`；移除 ARCHITECT Agent 文件；重新生成 hash。是否覆盖 v1.1.0 还是创建新版本由任务/发布策略决定，Builder 不自行 release。
+- Release policy：分发包必须包含 `LICENSE`，不得包含 ARCHITECT Agent 文件；现有 v1.1.0 缺 LICENSE 的包只能作为历史证据，在用户决定新版本前不擅自创建 tag/release。
 
 ## 11. 当前未收敛事项
 
-- TASK-0006 原始 `.ai/reports/TASK-0006-RELEASE.md` 仍缺失；不能由 Chat/Builder伪造。
+- TASK-0006 原始 `.ai/reports/TASK-0006-RELEASE.md` 仍缺失；不能由 Chat/Builder 伪造。
 - 当前 `maintenance/AUDIT.md` 历史 PASS 已失效。
 - release/deploy/tag 未授权。
 
 ## 12. 执行顺序
 
 ```text
-Chat 架构基线（本文件 + D-011）
-→ BUILDER 实体化规则/正式 docs/durable dispatch/audit/package 修复
+Chat 架构基线（D-011 + D-012 + 本文件）
+→ BUILDER 实体化规则/正式 docs/durable dispatch/audit/package policy 修复
 → Chat 验收实际 diff/tests/evidence
 → fresh VERIFIER 做独立 cold-start + upstream alignment 验证
 → Chat 收敛 .ai
