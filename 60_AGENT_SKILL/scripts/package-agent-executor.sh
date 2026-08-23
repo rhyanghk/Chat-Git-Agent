@@ -10,6 +10,11 @@ directory. The command stops if that package name already exists.
 EOF
 }
 
+if [ "$#" -eq 1 ] && { [ "$1" = "--help" ] || [ "$1" = "-h" ]; }; then
+  usage
+  exit 0
+fi
+
 [ "$#" -eq 1 ] || { usage >&2; exit 2; }
 output_dir="$1"
 

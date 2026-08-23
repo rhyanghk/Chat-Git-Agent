@@ -13,4 +13,5 @@ REPORT-TASK-000001-R001-BUILDER-001.md
 - 合同变化才递增 revision；同一 revision 的新正式提交才递增角色提交序号。
 - 不生成随机名、时间戳名、内容哈希、哈希命名或替代别名。
 - GitHub 中继使用任务分配的精确分支名，例如 `work/TASK-000001-R001-BUILDER-001`。
-- 正式报告固定顺序：任务编号和 revision、结果、交付、验证、剩余风险、下一步。
+- 正式报告固定顺序：报告编号、`task`、`role`、`delivery_state`、结果、交付、验证、剩余风险、下一步。
+- `local` 与 `github_relay` 在报告已写入任务指定正式位置后使用 `delivery_state: WRITTEN_TO_AUTHORITY_STORE`；`human_copy` 使用 `delivery_state: RETURNED_FOR_HUMAN_RECORDING`，由任务指定的记录者原样写入正式资料库。Agent 不改写该状态或声称已完成记录。

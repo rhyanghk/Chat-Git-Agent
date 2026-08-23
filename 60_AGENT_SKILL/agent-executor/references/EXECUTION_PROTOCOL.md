@@ -4,14 +4,16 @@
 
 ## 任务合同
 
-可执行任务必须包含：`task`、`role`、`startup_mode`、`authority_source`、`transport`、`project`、`scope`、`forbidden`、`acceptance`、`inputs`、`report` 和 `stop`。`github_relay` 任务还必须包含仓库、任务位置、基线分支、工作分支、完整同步范围和全部 `remote_actions`；缺失字段一律禁止，不作推断。
+可执行任务必须包含：`task`、`role`、`startup_mode`、`authority_source`、`transport`、`project`、`baseline`、`human_authorization`、`scope`、`forbidden`、`acceptance`、`inputs`、`report` 和 `stop`。`transport` 只能是 `local`、`github_relay` 或 `human_copy`。`github_relay` 任务还必须包含仓库、任务位置、基线分支、工作分支、完整同步范围和全部 `remote_actions`；`human_copy` 任务还必须包含完整的 `human_copy` 区块，声明 `dispatch: full_task_record`、`result: full_result_report` 和记录者。缺失字段一律禁止，不作推断。
+
+`local` 与 `github_relay` 可以先收到 `SEED-TASK-...`，但 Seed 必须含 `task`、`role`、`startup_mode`、`authority_source`、`transport`，并在 GitHub 中继时含仓库和任务位置。收到 Seed 后必须先读取完整 TASK；不能读取时返回 `BLOCKED`。`human_copy` 不接受 Seed。
 
 ## 七项开工检查
 
 1. 角色：身份、角色和会话无歧义；
 2. 入口：正式资料位置和精确 revision 可读；
 3. 授权：当前角色只拥有任务声明的最小权限；
-4. 访问：输入可读、输出可写，能力不等于授权；
+4. 访问：`local` 与 `github_relay` 的输入可读、输出可写；`human_copy` 已收到完整 TASK、可以原样返回完整 REPORT，能力不等于授权；
 5. 当前任务：只处理这一份精确任务；
 6. 边界：scope、forbidden、acceptance 和 stop 已读清；
 7. 状态：正式资料与项目当前状态没有无法解释的冲突。
@@ -21,6 +23,16 @@
 ## 本地执行与恢复
 
 本地任务读取正式资料和任务输入；需要写入时使用隔离且被授权的项目副本。`startup_mode: resume` 只用于同一任务、同一 revision、同一角色和可解释现场；只刷新当前任务、当前项目状态、相关输入和上次报告后的正式变化。出现无法解释的变化时停止，不通过扫描全历史或原地改写任务恢复。
+
+## 人工原样传递
+
+仅当任务明确声明 `transport: human_copy` 时使用：
+
+1. 输入必须是完整、编号的 TASK，含全部合同字段和 `human_copy` 区块；Seed、截图、摘要或改写后的转述一律返回 `BLOCKED`；
+2. 只按任务范围执行；任务要求读取但当前不可访问的项目资料或正式资料时返回 `BLOCKED`；
+3. 任务允许写入且目标可访问时，只写明示的项目输出；任务没有授予时不得借由人工传递扩大写入权限；
+4. 按固定格式返回完整 REPORT，`delivery_state` 必须为 `RETURNED_FOR_HUMAN_RECORDING`；不得省略结果、交付、验证、剩余风险或下一步；
+5. 报告由任务指定的记录者原样写入正式资料库。执行 Agent 在返回后停止，不声称已记录、已接受、已 merge、已 deploy 或已 release。
 
 ## GitHub 中继
 
@@ -35,7 +47,6 @@
 
 ## 变更、验证与结束
 
-scope、role、baseline、transport、forbidden、acceptance、inputs、report 或 stop 变化时，请求新 revision 并停止。共享接口、安全、权限或正式状态冲突时同样停止。
+project、role、startup_mode、authority_source、baseline、`human_authorization`、transport、scope、forbidden、acceptance、inputs、report、stop、`github_relay` 区块或 `human_copy` 区块变化时，请求新 revision 并停止。共享接口、安全、权限或正式状态冲突时同样停止。
 
-证据强于自述；准确说明已验证和未验证的内容。Builder、Research、Repair、Runner 与 Verifier 的提交不等于接受。完成后在任务指定位置写正式报告并停止。
-
+证据强于自述；准确说明已验证和未验证的内容。Builder、Research、Repair、Runner 与 Verifier 的提交不等于接受。`local` 与 `github_relay` 完成后在任务指定位置写正式报告并停止；`human_copy` 只返回完整报告并停止。

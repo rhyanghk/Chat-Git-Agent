@@ -1,6 +1,6 @@
 ---
 name: agent-executor
-description: Execute an explicitly assigned, numbered Builder, Research, Repair, Verifier, Runner, or Release task within its exact role, scope, permission, and evidence contract. Use only in an Agent execution session for bounded project work, including GitHub relay tasks; never use to create or revise a task, dispatch work, accept a result, or decide governance.
+description: Execute an explicitly assigned, numbered Builder, Research, Repair, Verifier, Runner, or Release task within its exact role, scope, permission, and evidence contract. Use only in an Agent execution session for bounded project work through local, GitHub-relay, or human-copy transport; never use to create or revise a task, dispatch work, accept a result, or decide governance.
 ---
 
 # Agent Executor
@@ -13,8 +13,8 @@ description: Execute an explicitly assigned, numbered Builder, Research, Repair,
 
 1. 精确任务编号和 revision，例如 `TASK-000001-R001`；
 2. 一个执行角色，并读取 [ROLE_PERMISSIONS.md](references/ROLE_PERMISSIONS.md) 的对应段落；
-3. 正式资料位置、启动模式、scope、forbidden、acceptance、inputs、report 和 stop；
-4. 所需输入可读、声明输出可写；
+3. 正式资料位置、启动模式、baseline、scope、forbidden、acceptance、inputs、report、stop 和 Human 授权位置；
+4. 所需输入可读；`local` 与 `github_relay` 的声明输出可写，`human_copy` 已收到完整 TASK 且可原样返回完整 REPORT；
 5. 当前任务与项目状态没有无法解释的冲突。
 
 任一项缺失、过期、不可读或矛盾时返回 `BLOCKED`，不猜测。
@@ -36,9 +36,10 @@ description: Execute an explicitly assigned, numbered Builder, Research, Repair,
 - 收到 `BOOTSTRAP_CHECK` 时，只完成 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md) 的七项开工检查并报告；不执行业务任务、不修改项目。
 - 收到 `CAPABILITY_SELF_CHECK` 时，只盘点运行时、工具、认证状态、目标访问、环境和限制；不输出秘密、不修改项目，也不把能力当作授权。
 
-## GitHub 中继与完成
+## 传输与完成
 
 当 `transport: github_relay` 时，按 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md) 刷新完整声明项目、使用隔离工作区、结束前再次刷新、只写授权工作分支并回读远端。除具有人类明确授权的 Release 任务外，绝不 merge、force push、deploy、release 或改默认分支。
 
-按 [NUMBERING_AND_OUTPUTS.md](references/NUMBERING_AND_OUTPUTS.md) 的格式在指定位置写一份正式报告：结果、交付、验证、剩余风险、下一步。人类可见说明默认简体中文；代码、路径、命令和固定机器标识保留原样。提交后停止等待验收。
+当 `transport: human_copy` 时，只接收完整编号 TASK，不接收 Seed、摘要或改写后的任务；完成后原样返回完整 REPORT，并将 `delivery_state` 写为 `RETURNED_FOR_HUMAN_RECORDING`。此时不得声称报告已写入正式资料库。
 
+按 [NUMBERING_AND_OUTPUTS.md](references/NUMBERING_AND_OUTPUTS.md) 的格式处理一份完整正式报告：`local` 与 `github_relay` 在指定位置写入后使用 `WRITTEN_TO_AUTHORITY_STORE`；`human_copy` 按上一段返回报告。人类可见说明默认简体中文；代码、路径、命令和固定机器标识保留原样。完成后停止等待验收。
