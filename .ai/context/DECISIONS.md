@@ -129,3 +129,13 @@ Agent 角色收敛为：
 supersedes: D-010 中“独立 ARCHITECT Agent”模型。
 
 来源：用户于 2026-08-23 最新明确指令：“ARCHITECT应作为chat的功能”。
+
+## D-012
+
+决定：Git/GitHub 模式下，Durable Dispatch artifact **不在自身内容中保存“包含自身的 commit SHA”**。exact dispatch pointer 由 minimal seed/外部派发记录提供，格式可为 `<repo>@<commit>:.ai/dispatch/TASK-xxxx-<ROLE>.md`；dispatch 文件自身保存 task/ref、common rule exact ref、role rule exact ref、role、report、startup mode、access 等可解析上下文。
+
+理由：Git commit SHA 由文件内容参与计算，文件若要求写入“包含自己的 SHA”会形成不可实现的哈希自引用。
+
+影响：D-011 架构下的 Durable Dispatch 采用“外部 exact pointer → dispatch artifact → exact task/rules”的单向寻址链。local-only 模式使用可复核本地路径/平台 identifier 和本地核验标记，不伪造 GitHub ref。
+
+来源：Chat 在 2026-08-23 按 D-011 执行架构设计时发现并修正的可实现性约束；属于对用户已接受架构目标的技术收敛，不改变用户授权边界。
