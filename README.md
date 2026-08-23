@@ -9,23 +9,23 @@ Human
   │  配置 Chat 控制项目：项目指令 + 控制运行文件
   ▼
 Chat 控制模型
-  │  创建编号任务，选择执行角色和传输方式
+  │  创建编号任务和初始状态，选择执行角色和传输方式
   ▼
 执行 Agent + Chat-Git-Agent Skill
   │  实施 / 验证，产出编号结果报告
   ▼
 Human 或共享正式资料库
-  │  记录报告，再把精确位置交回 Chat
+  │  记录报告、状态与 Human 决定，再把精确位置交回 Chat
   ▼
 Chat 控制模型
-  └─ 读取结果、记录风险，等待 Human 验收
+  └─ 读取结果、记录风险；只有 Human 正式决定后才标记接受
 ~~~
 
 完整闭环有三种传输方式：
 
 | 方式 | 何时使用 | Chat 与 Agent 如何交接 |
 | --- | --- | --- |
-| `local` | 同一受控本地项目和正式资料库对执行 Agent 可读写 | Chat 给出任务位置；Agent 读取任务、写入报告；Chat 读取报告位置 |
+| `local` | 同一受控本地项目和正式资料库对执行 Agent 可读写 | TASK 给出资料位置、项目位置和项目规则；Agent 在隔离副本执行、写入报告；Chat 读取报告位置 |
 | `github_relay` | 任务明确使用 GitHub 中继 | Chat 创建项目任务；Agent 完整同步、在隔离工作区执行、回写授权工作分支和报告；Chat 回读位置 |
 | `human_copy` | Chat 与 Agent 没有共同可读写的资料库，或跨平台只能人工复制 | Human 原样记录 Chat 输出的完整任务，再复制给 Agent；Agent 原样返回完整结果报告；Human 写入唯一正式资料库并把报告位置交回 Chat；Chat 不能直读时同时接收报告的原样副本 |
 
@@ -53,7 +53,7 @@ Chat 控制模型
 | `INSTALL.md` | Human | 配置 Chat 项目、安装或调用 Skill 时 |
 | `AGENTS.md` | 维护本仓的 Agent | 平台发现本仓规则，或维护任务明确列出时；不复制到业务项目 |
 | `CHAT_CONTROL/PROJECT_INSTRUCTIONS.md` | Chat 平台 | Human 将正文放入项目指令后，每次控制会话加载 |
-| `CHAT_CONTROL/CONTROL_RUNTIME.md` | Chat 控制模型 | Human 将其作为项目静态资料上传或提供；项目指令要求每次控制会话先读它 |
+| `CHAT_CONTROL/CONTROL_RUNTIME.md` | Chat 控制模型 | Human 将其作为项目静态资料上传或提供；项目指令要求每次控制会话先读它，并按其格式处理 TASK、状态、决定、报告和交接 |
 | `AGENT_SKILL/chat-git-agent/SKILL.md` | Agent 平台 | Skill 由默认规则或显式调用加载，随后才允许执行任务 |
 | `AGENT_SKILL/chat-git-agent/references/` | `Chat-Git-Agent` | Skill 在开始、角色、编号、恢复或传输场景按需读取 |
 | `AGENT_SKILL/chat-git-agent/agents/openai.yaml` | 支持元数据的平台 | 展示名称并为每次执行请求启用隐式调用时 |
@@ -73,4 +73,18 @@ Chat 控制模型
 
 `Human` 是 Chat 外的真实授权者。每个 Chat 会话只选择 `Global Architect` 或 `Project Architect`；`Builder`、`Research`、`Repair`、`Verifier`、`Runner`、`Release` 只能在独立执行 Agent 会话中工作。
 
-每个项目指定一个唯一正式资料库（`authority_store`）；任务中的 `authority_source` 是其中一份正式记录的精确位置。聊天记忆、临时附件和复制后的摘要都不能成为第二份合同。
+每个项目指定一个唯一正式资料库（`authority_store`）；任务中的 `authority_source` 是其中一份正式记录的精确位置。它必须能保留可定位的 TASK、状态、决定与报告原文；聊天记忆、临时附件和复制后的摘要都不能成为第二份合同。
+
+同一个控制项目管理多个业务项目时，使用 `CHAT_CONTROL_REGISTRY` 只登记项目资料库、项目位置、当前主责和当前状态位置；不把业务代码或任务正文复制进控制项目。
+
+## 业务项目最低可复现契约
+
+业务项目自行保存其可复现所需资料，不复制到 Chat 控制项目或通用 Skill：
+
+- 依赖、lockfile、必要运行时版本；
+- setup、run、test、lint 的实际入口；
+- 必要环境变量的名称与语义，不保存 secret 值；
+- fixture、迁移、本地服务或外部前置条件；
+- 项目本地 `AGENTS.md`、README、合同或 runbook。
+
+每份 TASK 必须精确指向当前项目副本和本轮必须读取的项目规则；执行 Agent 不从目录名、聊天记忆或历史任务猜测。

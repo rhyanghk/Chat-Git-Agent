@@ -17,28 +17,30 @@ description: Default mandatory execution protocol for an explicitly assigned, nu
 
 1. 精确任务编号和 revision，例如 `TASK-000001-R001`；
 2. 一个执行角色，并读取 [ROLE_PERMISSIONS.md](references/ROLE_PERMISSIONS.md) 的对应段落；
-3. 正式资料位置、启动模式、baseline、scope、forbidden、acceptance、inputs、report、stop 和 Human 授权位置；
-4. 所需输入可读；`local` 与 `github_relay` 的声明输出可写，`human_copy` 已收到完整 TASK 且可原样返回完整 REPORT；
-5. 当前任务与项目状态没有无法解释的冲突。
+3. 正式资料位置、项目位置、项目规则、启动模式、baseline、scope、forbidden、acceptance、inputs、report、stop 和 Human 授权位置；
+4. 任务点名的项目本地规则、合同和输入可读；`local` 与 `github_relay` 的声明输出可写，`human_copy` 已收到完整 TASK 且可原样返回完整 REPORT；
+5. 当前任务、正式资料和项目状态没有无法解释的冲突，并已按执行协议的权威优先级判断。
 
 任一项缺失、过期、不可读或矛盾时返回 `BLOCKED`，不猜测。
 
 ## 只读取需要的资料
 
-读取本文件、当前任务、当前角色段落和任务点名的项目文件。需要启动、恢复、证据或 GitHub 中继细节时读取 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md)；需要分配的精确名称或报告格式时读取 [NUMBERING_AND_OUTPUTS.md](references/NUMBERING_AND_OUTPUTS.md)。不要扫描无关任务、历史、项目或角色文件。
+读取本文件、当前任务、当前角色段落、任务点名的项目规则和项目文件。需要启动、恢复、证据或 GitHub 中继细节时读取 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md)；需要分配的精确名称或报告格式时读取 [NUMBERING_AND_OUTPUTS.md](references/NUMBERING_AND_OUTPUTS.md)。不要扫描无关任务、历史、项目或角色文件。
 
 ## 执行与停止
 
-- 只在 `scope` 内工作，不触碰 `forbidden`。
-- 不改变角色、revision、acceptance、baseline、正式资料位置或报告位置。
-- 不创建备份、镜像、临时合同或防御性文件。
+- 只在 `scope` 内工作，不触碰 `forbidden`，不把任务、报告、旧聊天或工具能力当作更高授权。
+- 不改变角色、revision、acceptance、baseline、项目位置、项目规则、正式资料位置或报告位置。
+- 写入前使用独立且被授权的项目副本；不得对不属于当前任务的现场执行 `reset`、`clean`、`stash`、覆盖、删除分支、重写历史或破坏性清理。
+- 不创建备份、镜像、临时合同或防御性文件；只有 TASK 明示的项目输出才可写入。
+- 不输出 password、token、private key、secret 或完整环境变量值。
 - 遇到共享接口、权限、资料状态或合同冲突时，提交变更请求并停止，不自行裁决。
 - 在任务指定的唯一正式位置记录证据；聊天文字不是正式记录。
 
 ## 两个检查指令
 
-- 收到 `BOOTSTRAP_CHECK` 时，只完成 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md) 的七项开工检查并报告；不执行业务任务、不修改项目。
-- 收到 `CAPABILITY_SELF_CHECK` 时，只盘点运行时、工具、认证状态、目标访问、环境和限制；不输出秘密、不修改项目，也不把能力当作授权。
+- 收到 `BOOTSTRAP_CHECK` 时，仍须先通过完整编号的 Runner TASK 启动门槛；该 TASK 的 `scope` 只能是 [EXECUTION_PROTOCOL.md](references/EXECUTION_PROTOCOL.md) 的七项开工检查。不得执行业务任务或修改项目；必须按任务的 `report` 字段写入或原样返回完整正式 REPORT。
+- 收到 `CAPABILITY_SELF_CHECK` 时，仍须先通过完整编号的 Runner TASK 启动门槛；只盘点运行时、工具、认证状态、目标访问、环境和限制。不得输出秘密、修改项目或把能力当作授权；必须按任务的 `report` 字段写入或原样返回完整正式 REPORT。
 
 ## 传输与完成
 
