@@ -90,22 +90,42 @@
 
 来源：用户于 2026-08-22 明确要求本轮完整修复 push/merge/release 权限。
 
-## D-010
+## D-010 — SUPERSEDED BY D-011
 
-决定：进一步分离 Chat 与 Agent 的工作层次。Chat 是长期协调与治理角色，负责理解用户目标、维护长期限制/决定、建立版本化任务合同、选择并派发角色、验收证据、维护 `.ai/**` 恢复状态和控制远端高风险动作；Chat 不替代项目本体的技术架构、产品文档设计或实现。`ARCHITECT` Agent 在被正式派发时负责对项目本体做架构：核对当前实现，定义模块、接口、数据流、依赖、运行边界、演进/迁移方案和实现拆分，并创建或维护项目正式架构文档。`.ai/context/ARCHITECTURE.md` 仅作为 Chat 快速恢复用的当前快照，不能替代项目正式架构文档。
+决定：进一步分离 Chat 与 Agent 的工作层次，并曾定义独立 `ARCHITECT` Agent 负责项目本体架构和正式架构文档。
 
-角色边界：
+状态：`SUPERSEDED`。该决定中“ARCHITECT 是独立 Agent 角色”的部分被 D-011 明确取代；其余关于 `.ai` 不是正式项目架构、Builder 负责实现、Chat 继续受 D-005 写入边界约束等原则继续由 D-011 重新表述。
 
-- `CHAT`：需求/限制澄清、任务合同、派发、授权控制、验收、长期记录和交接；只写业务项目 `.ai/**`。
-- `ARCHITECT`：项目本体架构和正式架构/设计文档；默认不实现业务代码，但可在 ARCHITECT TASK 明确授权的文档范围内修改项目文档和自身角色说明；不成为第二个主协调 Chat。
-- `BUILDER`：按已接受的目标/架构落实代码、规则、配置、测试和其他实现性产品文件。
-- `RESEARCH`：查证未知事实和方案证据，默认不施工。
-- `REPAIR`：修复已确认且边界清楚的问题。
-- `VERIFIER`：独立验收原任务、实际 diff 与验证证据，不顺手修改。
-- `RELEASE`：只处理已验收版本的 merge/deploy/release 阶段，并受独立授权门控制。
+来源：用户于 2026-08-23 早先明确要求；随后同日被用户最新明确指令取代。
 
-理由：`.ai` 是协调与恢复控制面，不应成为项目架构本身。若 Architect 只在 `.ai` 写报告而不对项目本体建立正式架构文档，会造成“有调度、无架构”的职责空洞，也使 Builder 缺少稳定的设计依据。
+## D-011
 
-影响：后续需更新 `agent/roles/ARCHITECT.md` 和用户文档，建立项目正式架构文档；涉及架构文档的修改由 ARCHITECT Agent 在正式 TASK 中执行，Chat 仍遵守 D-005 的 `.ai/**` 写入边界。该决定只取代现有产品规则中“ARCHITECT 默认只能写报告、不得修改项目文档”的过窄表述，不取代 D-005，也不产生 merge/deploy/release 权限。
+决定：`ARCHITECT` 不再是独立 Agent 角色，而是主协调 Chat 的内建架构功能。
 
-来源：用户于 2026-08-23 明确要求。
+Chat 的职责扩展为两层同时存在：
+
+- **协调/治理功能**：理解用户目标与限制、维护长期决定、建立和修订版本化 TASK、选择执行角色、控制授权、验收证据、维护 `.ai/**` 恢复状态、交接和风险收敛。
+- **架构功能（ARCHITECT-as-Chat）**：基于当前真实项目定义系统/产品分层、模块边界、接口、数据流、依赖、运行边界、架构约束、演进/迁移方案、技术取舍和实现拆分，并对正式项目架构文档的内容负责。
+
+Agent 角色收敛为：
+
+- `RESEARCH`：查证未知事实、外部资料和备选方案证据，默认不施工。
+- `BUILDER`：把 Chat 已确定的需求与架构落实为正式项目文档、规则、代码、配置、测试和其他产品文件。
+- `REPAIR`：修复已确认且边界明确的问题。
+- `VERIFIER`：独立验收任务、实际 diff/code/tests 与验证证据，不顺手修改。
+- `RELEASE`：只处理已验收 exact ref 的 merge/deploy/release 阶段，并受独立授权门控制。
+
+写入边界：D-011 **不取代 D-005**。Chat 仍只直接写业务项目 `.ai/**`；Chat 负责架构判断和架构内容，但当架构需要落到 `.ai/**` 之外的 `docs/**`、README、规则文件、代码或配置时，由 `BUILDER` 按正式 TASK 实体化。这样避免 Chat 同时承担“定义架构 → 修改产品 → 自我验收”的整条链。
+
+任务模型：不再创建 `role: ARCHITECT` 的 Agent TASK。需要架构时由主协调 Chat 先完成架构判断并留下 durable 架构基线/决定；随后创建 `BUILDER` TASK 实施，必要时使用 `RESEARCH` 补证据，实施后按风险使用 `VERIFIER`，发布阶段再使用 `RELEASE`。
+
+影响：
+
+- TASK-0008 的独立 ARCHITECT Agent 模型在执行前废止，状态改为 `SUPERSEDED_BEFORE_EXECUTION`。
+- 后续产品规则需要删除/退役 `agent/roles/ARCHITECT.md` 作为可派发 Agent 的语义，并从 README/INSTALL/USAGE/agent rules/release manifest 中移除 ARCHITECT Agent。
+- `chat/CHAT_CORE.md` 应加入明确的 Chat Architecture Function；正式项目架构文档由 Chat 负责内容与决策，Builder 负责文件落地。
+- `.ai/context/ARCHITECTURE.md` 仍只是快速恢复快照；Chat 可在 `.ai/**` 内维护更详细的架构基线/实施规格，Builder 再将已接受内容同步到正式项目文档。
+
+supersedes: D-010 中“独立 ARCHITECT Agent”模型。
+
+来源：用户于 2026-08-23 最新明确指令：“ARCHITECT应作为chat的功能”。
