@@ -1,26 +1,13 @@
-# TASK-0008 Durable Dispatch
+# TASK-0008 Durable Dispatch — SUPERSEDED
 
-status: DISPATCHED
-work_coordinate: `rhyanghk/Chat-Git-Agent:.ai/tasks/TASK-0008.md@revision-1`
-role: ARCHITECT
-startup_mode: fresh
-task_ref: dcfe78b21c5df6455f5c836a4e7a10ede5d86ab8
-task_source: `rhyanghk/Chat-Git-Agent@dcfe78b21c5df6455f5c836a4e7a10ede5d86ab8:.ai/tasks/TASK-0008.md`
-common_rule_source: `rhyanghk/Chat-Git-Agent@4e66a7785455f5ff9bf4b8d26f800af86b307380:agent/AGENTS.md`
-role_rule_source: `rhyanghk/Chat-Git-Agent@4e66a7785455f5ff9bf4b8d26f800af86b307380:agent/roles/ARCHITECT.md`
-decision_source: `.ai/context/DECISIONS.md#D-010`
-report: `.ai/reports/TASK-0008-ARCHITECT.md`
-work_branch: `architect/task-0008-project-architecture`
-remote_sync_gate: REQUIRED
+status: SUPERSEDED_BEFORE_EXECUTION
+original_task_ref: dcfe78b21c5df6455f5c836a4e7a10ede5d86ab8
+superseded_by_decision: D-011
+superseded_date: 2026-08-23
 
-remote_actions:
-  push_work_branch: allowed
-  open_pr: forbidden
-  merge: forbidden
-  deploy: forbidden
-  release: forbidden
+用户明确要求 `ARCHITECT` 作为主协调 Chat 的内建功能，而不是独立 Agent 角色，因此本派发永久失效，不得用于 fresh/resume 启动。
 
-user_authorized_actions:
-  - push_work_branch
+核验：远端未创建 `architect/task-0008-project-architecture`，没有 TASK-0008 ARCHITECT Agent work ref/报告。原内容仍可从 Git 历史恢复，仅作为历史证据。
 
-说明：本文件是当前产品完成 durable-dispatch 修复前的过渡性可恢复派发指针。Seed 只需定位本文件/Task，不复制任务正文。若 Agent 用户环境无法自动加载 ARCHITECT 角色规则，必须按 `role_rule_source` 的 exact ref 读取；不得猜测角色内容。TASK-0008 将设计后续正式 Durable Dispatch 位置和协议，本文件本身不预判最终目录结构。
+replacement_task: `.ai/tasks/TASK-0009.md`
+replacement_role: BUILDER
