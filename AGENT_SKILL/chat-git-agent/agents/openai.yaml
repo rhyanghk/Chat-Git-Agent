@@ -1,0 +1,7 @@
+interface:
+  display_name: "Chat-Git-Agent"
+  short_description: "Default protocol for bounded Agent execution"
+  default_prompt: "Use $chat-git-agent before every Agent execution task and follow its exact task contract."
+
+policy:
+  allow_implicit_invocation: true

@@ -6,8 +6,8 @@
 
 这不是安装 Skill，也不是上传业务项目。Chat 只需要两份通用静态资料：
 
-1. 将 [PROJECT_INSTRUCTIONS.md](00_CHAT_CONTROL/PROJECT_INSTRUCTIONS.md) 的正文放入平台的项目指令、Custom Instructions 或等价位置。
-2. 将 [CONTROL_RUNTIME.md](00_CHAT_CONTROL/CONTROL_RUNTIME.md) 作为项目静态资料上传或提供。它包含控制角色、完整任务流程和所有正式记录格式。
+1. 将 [PROJECT_INSTRUCTIONS.md](CHAT_CONTROL/PROJECT_INSTRUCTIONS.md) 的正文放入平台的项目指令、Custom Instructions 或等价位置。
+2. 将 [CONTROL_RUNTIME.md](CHAT_CONTROL/CONTROL_RUNTIME.md) 作为项目静态资料上传或提供。它包含控制角色、完整任务流程和所有正式记录格式。
 
 再为每个业务项目指定一个唯一 `authority_store`：数据库、受控文档库、项目版本库或其他 Human 能定位的正式记录位置。不要把业务代码、当前任务、报告或完整 Agent Skill 上传为 Chat 项目的固定资料。若该 Chat 没有资料库读写权限，Human 原样记录 Chat 输出的正式记录，再把精确位置（以及读不到时的原样副本）交回当前会话。
 
@@ -35,7 +35,7 @@ authority_store: <唯一正式资料库的 URL、路径、名称或查询方式>
 
 1. Human 用启动卡建立 Chat 控制会话；Chat 按 `CONTROL_RUNTIME.md` 创建 `CHAT_CONTROL_BOOTSTRAP` 和编号 `TASK`。
 2. Chat 为每个执行角色创建独立任务。任务明确写 `transport: local`、`github_relay` 或 `human_copy`。
-3. Human 启动一个装有 `agent-executor` 的独立 Agent 会话：
+3. Human 启动一个装有 `Chat-Git-Agent` 的独立 Agent 会话：
    - Agent 可读取 `authority_source` 时，只复制控制运行文件中的完整 `SEED-TASK-...`；
    - Agent 不可读取时，使用 `human_copy`，复制完整 `TASK` 记录，不能只复制摘要。
 4. Agent 只按当前任务工作并产出 `REPORT`：
@@ -46,58 +46,63 @@ authority_store: <唯一正式资料库的 URL、路径、名称或查询方式>
 
 这样一个 Chat 可以向多个平台、多个执行角色派发；每个 Agent 仍只处理一个独立编号任务。
 
-## 3. 安装 Agent 执行 Skill
+## 3. 发送一条安装指令给 Agent
 
-`agent-executor` 只安装到用户级 Agent Skill 目录，不进入 Chat 控制项目或业务项目仓库。
+`Chat-Git-Agent` 只安装到用户级 Agent Skill 目录，不进入 Chat 控制项目或业务项目仓库。把下列文字原样发送给具有本地文件和网络访问权限的 Agent：
+
+```text
+请安装 Chat-Git-Agent Skill。使用 https://github.com/rhyanghk/Chat-Git-Agent 的 main 分支，读取 AGENT_SKILL/scripts 中与当前平台相符的安装器，将 AGENT_SKILL/chat-git-agent 安装到用户级 Skill 目录。不得覆盖、删除、备份或镜像已有的 chat-git-agent；如已存在或当前平台不支持本地 Skill，返回 BLOCKED。安装后重新加载 Skills 或开始新 Agent 会话，并确认 Chat-Git-Agent 会作为每次执行任务的默认入口。
+```
+
+安装 Agent 根据自身平台选择下列目标；Human 不必手工拼接多条命令。
+
+| 平台 | 用户级安装位置 | 明确调用名 |
+| --- | --- | --- |
+| Codex | `~/.agents/skills/chat-git-agent` | `$chat-git-agent` |
+| Claude Code | `~/.claude/skills/chat-git-agent` | `/chat-git-agent` |
+| Cursor | `~/.agents/skills/chat-git-agent` | `/chat-git-agent` 或 Skills 选择器 |
+| GitHub Copilot | `~/.agents/skills/chat-git-agent` | `/chat-git-agent` |
+| Gemini CLI | `~/.agents/skills/chat-git-agent` | `/skills reload` 后由 Skills 选择器调用 |
+| 其他兼容平台 | 平台规定的用户级 Skill 根目录 | `chat-git-agent` |
+
+Skill 的规范名是 `chat-git-agent`，显示名和分发包名是 `Chat-Git-Agent`。支持隐式调用的平台会依据其元数据自动选择该 Skill。
+
+### 强制默认 Agent 规则
+
+将下列规则写入平台的**用户级 Agent 指令**，不要写入业务项目仓库。它使不支持隐式调用的平台也不能绕过 Skill：
+
+```text
+每次开始或恢复 Agent 执行任务时，先调用 Chat-Git-Agent。只有在读取当前精确编号 TASK、角色权限和任务指定资料后才允许读取、修改、验证或运行项目；任一项缺失、不可读或冲突时只返回 BLOCKED。不得把此规则用于控制会话、任务设计、派发、验收、merge、deploy 或 release 决策。
+```
+
+平台若完全不加载本地 Skill，也没有用户级 Agent 指令入口，就不能技术性强制自动调用；该平台只能作为 Chat 使用，或在每次 Agent 会话开始时原样提供上述规则。
+
+## 4. 手动安装与首次执行
+
+安装 Agent 也可以执行下列命令；`<platform>` 只能是 `codex`、`claude-code`、`cursor`、`copilot` 或 `gemini`。
 
 ```sh
-git clone --branch mainline/PROJECT-0001 --depth 1 https://github.com/rhyanghk/Chat-Git-Agent.git Chat-Git-Agent
+git clone --depth 1 https://github.com/rhyanghk/Chat-Git-Agent.git Chat-Git-Agent
 cd Chat-Git-Agent
+./AGENT_SKILL/scripts/install-chat-git-agent.sh --platform <platform>
 ```
 
-macOS / Linux：运行与你的平台相符的一条命令。
-
-```sh
-./60_AGENT_SKILL/scripts/install-agent-executor.sh --platform codex
-./60_AGENT_SKILL/scripts/install-agent-executor.sh --platform claude-code
-./60_AGENT_SKILL/scripts/install-agent-executor.sh --platform cursor
-./60_AGENT_SKILL/scripts/install-agent-executor.sh --platform copilot
-./60_AGENT_SKILL/scripts/install-agent-executor.sh --platform gemini
-```
-
-Windows PowerShell：在同一克隆目录运行。
+Windows PowerShell：
 
 ```powershell
-.\60_AGENT_SKILL\scripts\install-agent-executor.ps1 -Platform codex
-.\60_AGENT_SKILL\scripts\install-agent-executor.ps1 -Platform claude-code
-.\60_AGENT_SKILL\scripts\install-agent-executor.ps1 -Platform cursor
-.\60_AGENT_SKILL\scripts\install-agent-executor.ps1 -Platform copilot
-.\60_AGENT_SKILL\scripts\install-agent-executor.ps1 -Platform gemini
+.\AGENT_SKILL\scripts\install-chat-git-agent.ps1 -Platform <platform>
 ```
 
-| Agent 平台 | 用户级安装目录 | 调用方式 |
-| --- | --- | --- |
-| Codex | `~/.agents/skills/agent-executor` | 新会话输入 `$agent-executor`，再提供任务 Seed 或完整 TASK |
-| Claude Code | `~/.claude/skills/agent-executor` | 新会话输入 `/agent-executor`，再提供任务 Seed 或完整 TASK |
-| Cursor | `~/.agents/skills/agent-executor` | 新 Agent 会话从 Skills 选择或输入 `/agent-executor` |
-| GitHub Copilot | `~/.agents/skills/agent-executor` | 新会话输入 `/agent-executor`；可用 `copilot plugins list --kind skill` 检查 |
-| Gemini CLI | `~/.agents/skills/agent-executor` | 运行 `/skills reload`、`/skills list`，再提供任务 |
-| 其他兼容平台 | 平台规定的用户级 Skill 根目录 | 使用 `--target /path/to/skill-root`，再按平台方式调用 |
-
-安装器遇到已有 `agent-executor` 会停止；不会覆盖、删除、备份、镜像或创建第二份事实源。
-
-## 4. `.skill` 包与首次执行
-
-[agent-executor.skill](60_AGENT_SKILL/packages/agent-executor.skill) 是可分发包。Gemini CLI 可安装该包：
+[Chat-Git-Agent.skill](AGENT_SKILL/packages/Chat-Git-Agent.skill) 是可分发包。Gemini CLI 可安装该包：
 
 ```sh
-gemini skills install ./60_AGENT_SKILL/packages/agent-executor.skill --scope user
+gemini skills install ./AGENT_SKILL/packages/Chat-Git-Agent.skill --scope user
 ```
 
 GitHub Copilot CLI 可从源 `SKILL.md` 安装：
 
 ```sh
-copilot plugins install --skill ./60_AGENT_SKILL/agent-executor/SKILL.md
+copilot plugins install --skill ./AGENT_SKILL/chat-git-agent/SKILL.md
 ```
 
 安装只让平台发现 Skill，不产生授权。共享资料库可达时提供控制运行文件规定的完整 Seed：

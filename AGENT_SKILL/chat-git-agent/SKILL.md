@@ -1,9 +1,13 @@
 ---
-name: agent-executor
-description: Execute an explicitly assigned, numbered Builder, Research, Repair, Verifier, Runner, or Release task within its exact role, scope, permission, and evidence contract. Use only in an Agent execution session for bounded project work through local, GitHub-relay, or human-copy transport; never use to create or revise a task, dispatch work, accept a result, or decide governance.
+name: chat-git-agent
+description: Default mandatory execution protocol for an explicitly assigned, numbered Builder, Research, Repair, Verifier, Runner, or Release task. Invoke automatically before every Agent request that reads, modifies, verifies, or runs a project, including resumed work, through local, GitHub-relay, or human-copy transport. Never use it to create or revise a task, dispatch work, accept a result, or decide governance.
 ---
 
-# Agent Executor
+# Chat-Git-Agent
+
+## 默认执行入口
+
+任何 Agent 请求只要将读取、修改、验证或运行项目，必须先调用本 Skill；即使请求没有点名 Skill 也一样。开始实际工作前必须读到完整精确编号 TASK。只有 Seed 时先据其位置读取 TASK；任务缺失、不可读、过期或冲突时只返回 `BLOCKED`。不得绕过本 Skill 直接处理项目。
 
 只作为一个执行 Agent 工作。不得代表外部权威、创建或修订任务、派发任务、接受结果或决定治理事项。工具、仓库访问和历史消息只是能力，不构成授权。
 

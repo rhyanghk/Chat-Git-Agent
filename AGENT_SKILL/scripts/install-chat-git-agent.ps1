@@ -11,7 +11,7 @@ if (($null -ne $Platform -and $Platform -ne '') -and ($null -ne $Target -and $Ta
 }
 
 if (($null -eq $Platform -or $Platform -eq '') -and ($null -eq $Target -or $Target -eq '')) {
-    Write-Error 'Usage: install-agent-executor.ps1 -Platform <codex|claude-code|cursor|copilot|gemini> OR -Target <skill-root>'
+    Write-Error 'Usage: install-chat-git-agent.ps1 -Platform <codex|claude-code|cursor|copilot|gemini> OR -Target <skill-root>'
     exit 2
 }
 
@@ -25,8 +25,8 @@ if ($null -eq $Target -or $Target -eq '') {
     }
 }
 
-$source = Join-Path (Split-Path -Parent $PSScriptRoot) 'agent-executor'
-$destination = Join-Path $Target 'agent-executor'
+$source = Join-Path (Split-Path -Parent $PSScriptRoot) 'chat-git-agent'
+$destination = Join-Path $Target 'chat-git-agent'
 
 if (Test-Path -LiteralPath $destination) {
     Write-Error "INSTALL_BLOCKED: destination already exists: $destination"
@@ -39,4 +39,4 @@ if (-not (Test-Path -LiteralPath $Target)) {
 }
 Copy-Item -LiteralPath $source -Destination $destination -Recurse -ErrorAction Stop
 Write-Output "INSTALLED: $destination"
-Write-Output 'Next: start a new Agent execution session and provide an exact numbered task contract.'
+Write-Output 'Next: reload Skills or start a new Agent execution session; Chat-Git-Agent must run before project work.'

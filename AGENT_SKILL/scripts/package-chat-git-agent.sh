@@ -3,9 +3,9 @@ set -eu
 
 usage() {
   cat <<'EOF'
-Usage: package-agent-executor.sh <empty-output-directory>
+Usage: package-chat-git-agent.sh <output-directory-without-Chat-Git-Agent.skill>
 
-Create agent-executor.skill, a ZIP-format Agent Skill package, in the named
+Create Chat-Git-Agent.skill, a ZIP-format Agent Skill package, in the named
 directory. The command stops if that package name already exists.
 EOF
 }
@@ -29,9 +29,9 @@ command -v zip >/dev/null 2>&1 || {
 }
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-skill_root=$(CDPATH='' cd -- "$script_dir/../agent-executor" && pwd)
+skill_root=$(CDPATH='' cd -- "$script_dir/../chat-git-agent" && pwd)
 parent_dir=$(dirname -- "$skill_root")
-output="$output_dir/agent-executor.skill"
+output="$output_dir/Chat-Git-Agent.skill"
 
 if [ -e "$output" ]; then
   printf '%s\n' "PACKAGE_BLOCKED: destination already exists: $output" >&2
@@ -42,6 +42,6 @@ fi
 mkdir -p -- "$output_dir"
 (
   cd -- "$parent_dir"
-  zip -q -r "$output" agent-executor
+  zip -q -r "$output" chat-git-agent
 )
 printf '%s\n' "PACKAGED: $output"
