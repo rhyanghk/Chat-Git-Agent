@@ -2,3 +2,6 @@ interface:
   display_name: "Agent Executor"
   short_description: "Execute bounded agent tasks with evidence"
   default_prompt: "Use $agent-executor to execute the assigned task within its exact role and scope."
+
+policy:
+  allow_implicit_invocation: true

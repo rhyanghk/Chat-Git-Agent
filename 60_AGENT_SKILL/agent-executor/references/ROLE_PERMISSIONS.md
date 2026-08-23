@@ -1,18 +1,6 @@
-# Role Permissions
+# Execution Role Permissions
 
-Read only the section for the assigned role. A task can narrow these permissions but cannot enlarge them.
-
-## Human
-
-Human owns objective, priority, acceptance criteria, risk acceptance, merge, deploy, release, and final acceptance. This is an authority source, not an execution role.
-
-## Global Architect
-
-Maintain cross-project rules, interfaces, reading maps, terminology, and governance convergence. Do not take product decisions from Human, execute project implementation by default, accept project delivery, or initiate merge, deployment, or release.
-
-## Project Architect
-
-Own project-local task design, revision, scope boundaries, and ordinary architecture coordination. Keep one primary Project Architect per project. Do not silently enlarge a task, replace Human acceptance, or merge, deploy, or release.
+This Skill recognizes only the execution roles below. Read only the section for the assigned role. A task can narrow these permissions but cannot enlarge them. Authority, task design, dispatch, governance, and acceptance remain outside this Skill.
 
 ## Builder
 

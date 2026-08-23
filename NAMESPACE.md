@@ -1,35 +1,19 @@
 # Chat-Git-Agent Namespace
 
-本文件是目录入口，不是第二套 L0 规则。实际执行规则以 AGENTS.md、当前角色规则和精确任务为准。
+本文件只说明当前项目实际目录；它不是第二套执行规则。执行规则以 [AGENTS.md](AGENTS.md)、当前角色规则和精确任务为准。
 
-~~~text
-00_CHAT_CONTROL / 00_KERNEL
-            ↓
-10_BOOT
-            ↓
-20_ROLES
-            ↓
-30_PROTOCOLS
-            ↓
-40_GUIDES
-            ↓
-50_TEMPLATES
-            ↓
-60_AGENT_SKILL
-            ↓
-90_HISTORY
-~~~
+| 位置 | 当前职责 | 默认何时读取 |
+| --- | --- | --- |
+| `00_CHAT_CONTROL/` | Chat 控制项目指令、控制角色和平台适配 | 建立或运行 Chat 控制项目时 |
+| `00_KERNEL/` | 语言政策与稳定治理入口 | 需要稳定规则或输出规范时 |
+| `10_BOOT/` | Bootstrap Check 和 Workspace Bootstrap | 首次搭建、启动、恢复、交接时 |
+| `20_ROLES/` | 六个执行角色的职责边界 | 创建或执行编号任务时 |
+| `30_PROTOCOLS/` | 编号、正式记录、业务仓边界、GitHub 中继 | 任务、变更、证据或 GitHub 中继时 |
+| `40_GUIDES/` | 面向陌生使用者的冷启动验证 | 验证安装或首次使用路径时 |
+| `50_TEMPLATES/` | Chat、任务、报告、变更、交接的正式模板 | 需要创建正式记录时 |
+| `60_AGENT_SKILL/agent-executor/` | 唯一执行型 Skill | 独立 Agent 收到任务时 |
+| `60_AGENT_SKILL/packages/` | 当前 Skill 的分发包 | 支持 `.skill` 包的平台安装时 |
+| `60_AGENT_SKILL/scripts/` | 当前 Skill 的安装与打包器 | 本地安装或重新打包时 |
+| `docs/` | Agent 接口、渐进上下文与会话生命周期 | 场景需要时 |
 
-| 层 | 职责 |
-| --- | --- |
-| 00_CHAT_CONTROL | Chat 项目指令、Chat 侧角色、数据源与平台适配；不进入执行 Skill。 |
-| 00_KERNEL | 宪法、机器 L0、语言政策与公共入口。 |
-| 10_BOOT | Bootstrap、workspace 注册、恢复入口。 |
-| 20_ROLES | 原始角色集的职责与权限边界。 |
-| 30_PROTOCOLS | 编号、任务接口、控制记录、GitHub 中继、项目仓边界。 |
-| 40_GUIDES | 冷启动和用户可见指南。 |
-| 50_TEMPLATES | 编号化任务、报告、变更、交接与启动模板。 |
-| 60_AGENT_SKILL | 可安装的纯执行 Agent Skill。 |
-| 90_HISTORY | 历史与被替代材料，默认不进入执行上下文。 |
-
-命名空间是逻辑分层，不要求业务项目复制这些文件。
+不存在要求业务项目复制这些目录的隐含规则。业务项目只保存其项目特有的代码、约束、任务、报告和证据。

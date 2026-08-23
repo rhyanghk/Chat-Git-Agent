@@ -1,42 +1,37 @@
-# START HERE
+# START HERE — Chat-Git-Agent PROJECT-0001
 
-陌生 Human、Chat 或 Agent 第一次进入 Chat-Git-Agent 时的启动文档。
+你现在进入的是 `Chat-Git-Agent` 本身：一个用于分发协作控制资料与执行型 Agent Skill 的仓库。它不是任何业务项目的代码仓库。
 
----
+先选择你现在要做的事；不要从头通读全仓。
 
-## 1. Chat-Git-Agent 是什么
+| 你的身份 / 目的 | 现在读什么 | 此刻不要做什么 |
+| --- | --- | --- |
+| Human，要建立或使用 Chat 协作控制项目 | [INSTALL.md](INSTALL.md) → `00_CHAT_CONTROL/` | 安装执行 Skill 到 ChatGPT Web 或 Claude Web；把控制资料复制进业务仓 |
+| 模型，要以 Global Architect 或 Project Architect 协助 Human | [PROJECT_INSTRUCTIONS.md](00_CHAT_CONTROL/PROJECT_INSTRUCTIONS.md) → 当前角色规则 | 自称 Human；切换为 Builder、Verifier 或 Release |
+| 执行 Agent，收到一个编号任务 | [AGENTS.md](AGENTS.md) → 当前 `TASK-xxxxxx-Rxxx` → `60_AGENT_SKILL/agent-executor/` | 读取全部历史、猜测角色或自行起草任务 |
+| Human，要安装执行 Skill | [INSTALL.md](INSTALL.md) 的“安装 Agent 执行 Skill” | 将完整 Skill 放入业务项目仓库 |
+| 维护本仓本身 | [AGENTS.md](AGENTS.md) → 当前任务 → [READING_MAP.md](READING_MAP.md) | 让无关资料或未授权任务定义当前项目 |
 
-Chat-Git-Agent 是一套围绕 Human governance、专职 AI role、可恢复控制记录与可选 GitHub 中继的人机协作方法论。
+## 本项目的三个实际容器
 
-- 分离 Chat 控制职责与 Agent 执行职责；
-- 保留 Human / Global Architect / Project Architect / Builder / Research / Repair / Verifier / Runner / Release 的权限边界；
-- 使用编号化任务、revision、正式报告和可恢复位置，而非聊天记忆、内容哈希或临时副本；
-- 在明确启用 github_relay 时，要求 Agent 在开始与结束都同步完整项目仓库；
-- 不要求业务项目、实际本地仓库或 GitHub 仓库承载通用 Chat 架构或完整 Agent Skill。
+1. **协作控制项目**：一个独立的 ChatGPT Web、Claude Web、Claude Code Chat 或其他 Chat 平台项目空间。这里载入 `00_CHAT_CONTROL/` 的项目指令、控制角色规则和当前项目的正式资料源。
+2. **执行型 Agent Skill**：本仓实际提供的是 `60_AGENT_SKILL/agent-executor/`，并已提供 `agent-executor.skill` 包和跨平台安装器。它只在独立执行 Agent 会话中工作。
+3. **业务项目仓库**：真实项目的代码、构建、测试、任务、报告和证据所在位置。它不会复制本仓完整的 Chat 或 Skill 架构。
 
-它不是运行时、数据库、Router 或自动审批器。它是规则、接口、模板和平台适配资料。
+三个容器可以在不同的设备、平台或服务上；职责不能混用。
 
-## 2. 三个独立容器
+## Chat 身份
 
-1. 协作控制项目：ChatGPT Web、Claude Web、Claude Code 的 Chat 模式或其他 Chat 平台中的项目空间。保存项目指令、Chat 侧角色、任务与决策的数据源，以及人工复制派发资料。
-2. Agent 执行 Skill：只供可安装 Skill 的执行环境使用。它只接收编号化任务、执行、验证并回传正式结果；不包含 Chat 架构。
-3. 业务项目：实际本地仓库或 GitHub 仓库。只保存该项目的代码、构建、测试、项目约束、项目任务、项目报告和项目证据。
+`Human` 是人，不是模型工作角色。模型在 Chat 协作控制项目中只能是以下之一：
 
-通用资料不进入业务项目；业务代码与私有运行态不进入本仓的通用规则。
+- `Global Architect`：跨项目规则、接口、术语、阅读地图与治理收敛；
+- `Project Architect`：一个业务项目的任务、revision、边界、派发与结果收敛。
 
-## 3. 第一阅读入口
+`Builder`、`Research`、`Repair`、`Verifier`、`Runner`、`Release` 是执行 Agent 角色，只能通过 `agent-executor` 在独立会话中运行。完整职责表在根目录 [README.md](README.md)；Chat 角色规则在 `00_CHAT_CONTROL/ROLES/`。
 
-按顺序读，不要通读全仓：
+## Agent 如何真正开始
 
-1. READING_MAP.md：按当前角色和场景定位最小阅读集合；
-2. NAMESPACE.md：理解目录与职责流向；
-3. AGENTS.md：执行 Agent 的机器 L0；
-4. README.md：体系概览；
-5. Chat 侧角色再读 00_CHAT_CONTROL/；执行 Agent 按需读 60_AGENT_SKILL/agent-executor/。
-
-## 4. 启动与任务
-
-最小任务种子只寻址，不复制完整任务知识：
+安装 Skill 不会产生授权。执行 Agent 必须收到一个可解析的正式任务合同；最小 Seed 只用于定位：
 
 ~~~text
 task: TASK-000001-R001
@@ -44,38 +39,15 @@ role: Builder
 startup_mode: fresh
 ~~~
 
-任务合同、范围、禁止项、验收、输入和正式报告位置必须在命名的 durable authority source 中。GitHub 中继任务额外给出 repository、task reference、base branch、work branch 和明确 remote actions。
+完整合同必须给出 authority source、scope、forbidden、acceptance、inputs、report 与 stop。缺少、不可读、冲突或状态漂移时返回 `BLOCKED`，不能补猜。
 
-## 5. GitHub 是可选中继，不是业务前提
+## GitHub 的实际位置
 
-业务项目可以完全不使用 GitHub。只有任务明确声明 transport: github_relay 时，GitHub 才成为该任务的中继端：
+GitHub 是可选中继，不是本项目要求业务项目必备的系统。只有任务显式声明 `transport: github_relay` 时，执行 Agent 才必须：完整同步指定业务项目仓库 → 在隔离工作区执行 → 再次同步授权结果 → 回读远端。没有该声明时，按任务指定的本地正式资料源工作。
 
-1. 控制角色将项目相关任务记录发布到 GitHub；
-2. Agent 刷新远端并同步完整项目树后才读取和执行；
-3. Agent 在隔离工作区和指定工作分支完成任务；
-4. Agent 再次刷新远端、同步授权的项目结果回 GitHub，并回读远端位置；
-5. 提交不等于验收，Human 保留最终接受权。
+## 下一步
 
-## 6. 首次搭建
-
-首次使用时准备：
-
-- 本治理资料库；
-- 一个独立协作控制项目及其唯一正式资料库；
-- 可选的 Agent Skill 安装位置；
-- 一个或多个业务项目；
-- 仅在需要时注册 GitHub 中继。
-
-详情见 10_BOOT/WORKSPACE_BOOTSTRAP_PROTOCOL.md 与 50_TEMPLATES/HUMAN_WORKSPACE_BOOTSTRAP.md。
-
-## 7. 重要边界
-
-- Human 拥有目标、优先级、风险接受、验收、merge、deploy 与 release 的最终决定权。
-- 工具可用、仓库可写、模型建议或历史材料都不产生权限。
-- 不使用内容哈希、哈希命名、备份副本、镜像文件或防御性写入。
-- 任务、revision、分支、报告和证据使用精确编号命名。
-- 缺少角色、任务、权限、入口或状态一致性时，停止并报告 BLOCKED。
-
-## 8. 验证入口
-
-陌生用户的冷启动验证见 40_GUIDES/PUBLIC_COLD_START_CHECKLIST.md。平台专用 Chat 使用说明见 00_CHAT_CONTROL/PLATFORM_ADAPTERS/。
+- 需要具体操作：读 [INSTALL.md](INSTALL.md)。
+- 需要判断读取范围：读 [READING_MAP.md](READING_MAP.md)。
+- 需要了解本项目实际目录：读 [NAMESPACE.md](NAMESPACE.md)。
+- 需要验证冷启动：读 [40_GUIDES/PUBLIC_COLD_START_CHECKLIST.md](40_GUIDES/PUBLIC_COLD_START_CHECKLIST.md)。
