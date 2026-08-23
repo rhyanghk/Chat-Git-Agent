@@ -1,95 +1,245 @@
-# 当前结构
+# 当前结构与 Chat 架构基线
 
-状态：derived recovery snapshot
-last_verified_ref: ab60238ba539bc13437c0ef928a7ce757e37ea1f
+状态：derived recovery snapshot + accepted architecture baseline
+last_verified_ref: 17b880fa6017c9105a30e33c67828620fb6e4900
 product_merge_ref: ac93e0676b6fb535c1c3c72d7300de6f9d3eab30
-architecture_task_ref: dcfe78b21c5df6455f5c836a4e7a10ede5d86ab8
+architecture_decision: D-011
 
-> 本文件只服务 Chat 的快速恢复与当前状态核验，不是项目本体的正式架构文档。正式架构文档由 ARCHITECT Agent 在项目文档目录维护；当前 TASK-0008 正在建立 `docs/ARCHITECTURE.md`、`docs/OPERATING_MODEL.md`、`docs/DISPATCH_PROTOCOL.md`。
+> 本文件由主协调 Chat 维护，用于快速恢复当前架构事实与下一阶段实施规格。它不是面向最终用户的正式项目文档；正式 `docs/**` 由 Builder 按本基线实体化。架构判断和内容归 Chat，产品文件写入归被派发的 Agent。
 
-## 当前产品结构
+## 1. 目标架构
+
+Chat-Git-Agent 分成四个逻辑层：
+
+```text
+Human authority
+    ↓
+Chat control + architecture plane
+    ↓ durable TASK / DISPATCH / decisions / acceptance
+Agent execution plane
+    ↓ diff / tests / reports / exact refs
+Project + Git durable state
+```
+
+### Human authority
+
+用户保留目标、优先级、验收标准、风险接受、merge、deploy、release 的最终决定权。
+
+### Chat control + architecture plane
+
+Chat 同时承担：
+
+1. 治理/协调：恢复项目、维护长期约束与决定、建立 TASK、派发执行角色、权限控制、验收、交接、`.ai/**` 收敛；
+2. 架构：定义模块边界、接口、数据流、依赖、运行边界、技术约束、迁移/演进方案、实现拆分和正式架构文档的内容。
+
+Chat 仍受 D-005 约束，只直接写业务项目 `.ai/**`。正式项目文档、规则、代码、配置和测试由 Builder/Repair 实体化，避免 Chat 自己完成“架构 → 修改产品 → 自我验收”全链路。
+
+### Agent execution plane
+
+可派发 Agent 角色收敛为五个：
+
+- `RESEARCH`：补事实和方案证据；
+- `BUILDER`：按 Chat 已确定的需求/架构实施产品文件；
+- `REPAIR`：修已确认问题；
+- `VERIFIER`：独立验收；
+- `RELEASE`：执行被单独授权的 merge/deploy/release。
+
+`ARCHITECT` 不再是 Agent role。
+
+## 2. 产品目标结构
 
 ```text
 README.md
 INSTALL.md
 USAGE.md
 LICENSE
+docs/
+  ARCHITECTURE.md
+  OPERATING_MODEL.md
+  DISPATCH_PROTOCOL.md
 chat/
   CHAT_CORE.md
 agent/
   AGENTS.md
   roles/
+    BUILDER.md
+    RESEARCH.md
+    REPAIR.md
+    VERIFIER.md
+    RELEASE.md
 maintenance/
   UPSTREAM.md
   AUDIT.md
   CHANGELOG.md
+  COLD_START.md          # 或同等 cold-start 验证入口，由 Builder 选择最简单实现
 release/
-  v1.1.0/
 .ai/
 ```
 
-- `chat/`：提供给长期协调 Chat 安装的治理/协调规则；Chat 在业务项目只写 `.ai/**`。
-- `agent/`：提供给 Agent 用户环境安装的通用执行规则和角色规则。
-- `maintenance/`：维护 Chat-Git-Agent 自身与 upstream 的对齐、审计和变更历史；不进入业务项目。
-- `release/`：当前本地/仓库中的发布候选包及校验材料；不等于已获正式 release 授权。
-- `.ai/`：只记录 Chat-Git-Agent 自己的控制、任务、证据、恢复和交接状态；不能替代产品正式架构文档。
+`agent/roles/ARCHITECT.md` 应从可安装/可派发角色集合退役；是否直接删除由 Builder 根据引用清理结果执行，但最终产品不得再把它暴露成 Agent role。
 
-## 当前职责分层
+## 3. 业务项目 `.ai` 控制面目标
+
+在现有结构上增加 task-specific Durable Dispatch：
 
 ```text
-用户
-  ↓ 目标 / 限制 / 最终决定
-Chat
-  ↓ 任务合同 / 派发 / 授权控制 / 验收
-Agent（按未解决问题选择最少角色）
-  ├─ RESEARCH：事实与方案证据
-  ├─ ARCHITECT：项目本体架构 + 正式架构/设计文档 + 实现拆分
-  ├─ BUILDER：落实已明确架构/范围的实现
-  ├─ REPAIR：修复已确认问题
-  ├─ VERIFIER：独立验收
-  └─ RELEASE：执行被授权的 merge/deploy/release 阶段
-  ↓
-报告 / exact refs / tests / diff
-  ↓
-Chat 验收并收敛 `.ai/**`
+.ai/
+├─ INDEX.md
+├─ context/
+├─ tasks/
+├─ dispatch/
+│  └─ TASK-xxxx-<ROLE>.md
+├─ reports/
+└─ handoff/
 ```
 
-当架构已经明确且任务边界简单时，Chat 可以直接派 BUILDER；当模块边界、接口、数据流、迁移或实现拆分尚不清楚时，必须先由 ARCHITECT 形成项目本体设计，不允许 Chat 用 `.ai/context/ARCHITECTURE.md` 代替正式技术架构。
+`dispatch/` 只保存当前业务项目的任务派发元数据和规则 pointer，不复制通用 Agent 规则或角色正文，因此不破坏“业务项目零预装”。
 
-## 当前任务控制流
+## 4. Durable Dispatch 设计
+
+每个 Agent TASK 在启动前必须有 durable dispatch artifact。最低字段：
 
 ```text
-用户要求
-→ Chat 读取当前 durable/live state
-→ Chat 建立/修订 `.ai/tasks/TASK-xxxx.md`
-→ Chat 回读 TASK；使用 Git 时取得 exact task_ref
-→ Durable Dispatch/最小启动指针
-→ Agent Remote Sync / Bootstrap
-→ Agent 在隔离工作区执行
-→ `.ai/reports/TASK-xxxx-<ROLE>.md` + diff/tests/exact refs
-→ Chat 验收
-→ 必要时下一角色（ARCHITECT → BUILDER → VERIFIER → RELEASE）
-→ Chat 收敛 ACTIVE/CURRENT/context
+dispatch_id
+task
+task_revision
+role
+project
+startup_mode
+report
+common_rule
+role_rule
 ```
 
-当前产品尚未正式定义可跨 fresh Agent 稳定恢复的 Durable Dispatch/role-rule pointer 协议；TASK-0008 将给出设计，后续 BUILDER 落实。
+使用 Git/GitHub 时再包含：
 
-## 业务项目边界
+```text
+task_ref
+dispatch_ref
+common_rule_ref
+role_rule_ref
+access
+```
 
-业务项目首次接入前不放 Chat-Git-Agent 通用文件。首次接入后只建立项目自己的 `.ai/`。
+要求：
 
-需要长期存在的业务项目正式技术文档（架构、接口、数据流、部署、迁移等）属于项目本体，由 ARCHITECT/BUILDER 按正式 TASK 维护在项目文档位置；`.ai/context/*.md` 只保留恢复所需的精简快照、长期决定和证据指针。
+- `common_rule` / `role_rule` 必须是本轮实际可解析的 durable/exact pointer；不得只写 `role: BUILDER` 然后依赖用户记忆角色文件在哪里。
+- GitHub 模式优先 exact `<repo>@<commit>:<path>`。
+- local-only 模式记录 Agent 环境中已安装规则的可解析绝对路径或平台原生 identifier，并记录本地核验标记；不能伪造 GitHub ref。
+- 业务项目中不复制通用 `AGENTS.md` 或 `roles/*.md`。
+- TASK 合同变化导致 revision+1 时，旧 dispatch 失效，必须产生新 dispatch/ref。
 
-## 当前已确认风险
+## 5. Minimal Seed
 
-- fresh Agent 角色规则发现尚未 durable 化：当前产品要求角色规则必须读取，但通用 seed 未保证提供 exact role-rule pointer。
-- Durable Dispatch 尚无正式稳定位置/协议；当前 TASK-0008 使用 `.ai/reports/TASK-0008-DISPATCH.md` 作为过渡性可恢复派发指针。
-- `maintenance/AUDIT.md` 的历史 PASS 已被 live upstream audit 的 `NEEDS_REPAIR` 推翻；静态文档存在检查不能代替 cold-start 可执行验证。
-- Bootstrap Check 的 durable evidence 语义需要在下一阶段实现中加强。
-- Release 安装包的 LICENSE 分发检查需要修复；在新 live audit PASS 前不得进入正式 release。
-- TASK-0006 原始 RELEASE Agent 报告仍未进入 durable source。
-- 主流 Chat/Agent 平台安装入口会变化，平台特定说明必须定期按官方资料核验。
+给 Agent 的可见启动提示只负责定位 durable dispatch，目标形态：
 
-## 当前演进阶段
+```text
+dispatch: <exact durable dispatch pointer>
+startup_mode: fresh | resume
+```
 
-TASK-0008（ARCHITECT）先建立项目本体架构与 Builder 实施图；Chat 当前处于 `WAIT_AGENT_RESULT`，不会替 Agent 修改 `.ai/**` 之外的产品文件。ARCHITECT 结果经 Chat 验收后，再建立后续 BUILDER TASK 实施修复，必要时使用一个 fresh VERIFIER 独立验收。
+若平台首次访问需要额外 route/access hint，只加 bootstrap-critical 最小字段；TASK 正文、scope、验收清单、角色规则正文、模型/时间建议不得复制进 seed。
+
+Agent 启动路径：
+
+```text
+Seed
+→ Durable Dispatch
+→ common rule + role rule
+→ exact TASK revision
+→ Bootstrap Check
+→ execution
+```
+
+## 6. Bootstrap durable evidence
+
+Bootstrap Check 不能只在聊天里返回“已确认”。Agent 开工前至少核对：
+
+1. role；
+2. dispatch entry；
+3. authority；
+4. access；
+5. exact active task/revision；
+6. scope/forbidden/acceptance；
+7. current live state。
+
+结果必须进入 durable evidence，例如 `.ai/reports/TASK-xxxx-BOOTSTRAP.md` 或 dispatch 指定的同等位置。缺任一关键项时 `BLOCKED`。
+
+## 7. Cold-start 验收
+
+Release Audit 不能再只检查“文档里写了这些规则”。新的 live PASS 至少要求一次 fresh Agent 验证：
+
+```text
+只给 minimal seed
+→ 能读取 durable dispatch
+→ 能取得 common rule + exact role rule
+→ 能读取 exact TASK revision
+→ 能完成 Bootstrap Check
+→ 能写 durable bootstrap/result evidence
+```
+
+实际 fresh-Agent 证据 pointer 必须进入本轮 audit；没有该证据，只能 `NOT_VERIFIED/NEEDS_REPAIR`，不得静态推导 PASS。
+
+## 8. Upstream compatibility 分类
+
+### MUST_REPAIR
+
+- fresh Agent role-rule discoverability；
+- Durable Dispatch 正式位置/协议；
+- minimal seed 只寻址；
+- Bootstrap durable evidence；
+- cold-start executable validation；
+- live audit 不得沿用历史 PASS；
+- stale `.ai` snapshot 防护；
+- Release 包 LICENSE 分发检查；
+- 产品仍暴露独立 ARCHITECT Agent 的旧模型。
+
+### INTENTIONAL_DIVERGENCE
+
+- Chat/Agent 用户级安装、业务项目零预装；
+- GitHub 可选，本地流程仍可运行；
+- 不强制 upstream 多仓 Workspace Registry；
+- 简化 handoff 状态模型。
+
+这些只能描述为 intentional divergence / semantic adaptation，不得声称 upstream full protocol parity。
+
+## 9. 正式项目文档分工
+
+Builder 应根据本 Chat 架构基线创建：
+
+- `docs/ARCHITECTURE.md`：稳定产品架构、分层、组件、控制流、durable state、运行/安装边界、兼容策略；
+- `docs/OPERATING_MODEL.md`：Human / Chat / RESEARCH / BUILDER / REPAIR / VERIFIER / RELEASE 职责矩阵和生命周期；
+- `docs/DISPATCH_PROTOCOL.md`：TASK → durable dispatch → seed → bootstrap → execution → report 的正式协议。
+
+`.ai/context/ARCHITECTURE.md` 继续只保存当前恢复快照、架构决定和正式文档 pointer；以后正式 docs 与实现冲突时先核验 live implementation，再刷新快照。
+
+## 10. Builder 实施文件图
+
+下一阶段 Builder 至少处理：
+
+- `chat/CHAT_CORE.md`：加入 Architecture Function；移除独立 ARCHITECT Agent 派发模型；定义 `.ai/dispatch/` 和 durable dispatch gate。
+- `agent/AGENTS.md`：角色集合收敛为五个；以 durable dispatch 为启动入口；Bootstrap 必须 durable 留痕。
+- `agent/roles/ARCHITECT.md`：退役/删除，并清理所有产品引用。
+- `README.md` / `USAGE.md` / `INSTALL.md`：更新职责、角色和启动接口。
+- `docs/ARCHITECTURE.md` / `docs/OPERATING_MODEL.md` / `docs/DISPATCH_PROTOCOL.md`：创建正式项目文档。
+- `maintenance/UPSTREAM.md`：更新作用映射和 intentional divergence。
+- `maintenance/AUDIT.md`：历史 PASS 与 live PASS 分离；无 fresh cold-start evidence 不得 PASS；加入 LICENSE 检查。
+- cold-start 验证入口/记录：提供明确的 fresh Agent 验证协议与 evidence pointer。
+- `release/v1.1.0` 或下一修复版本：manifest/ZIP 必须包含 `LICENSE`；移除 ARCHITECT Agent 文件；重新生成 hash。是否覆盖 v1.1.0 还是创建新版本由任务/发布策略决定，Builder 不自行 release。
+
+## 11. 当前未收敛事项
+
+- TASK-0006 原始 `.ai/reports/TASK-0006-RELEASE.md` 仍缺失；不能由 Chat/Builder伪造。
+- 当前 `maintenance/AUDIT.md` 历史 PASS 已失效。
+- release/deploy/tag 未授权。
+
+## 12. 执行顺序
+
+```text
+Chat 架构基线（本文件 + D-011）
+→ BUILDER 实体化规则/正式 docs/durable dispatch/audit/package 修复
+→ Chat 验收实际 diff/tests/evidence
+→ fresh VERIFIER 做独立 cold-start + upstream alignment 验证
+→ Chat 收敛 .ai
+→ 如需 merge/release，再分别取得用户授权并建立 RELEASE TASK
+```
