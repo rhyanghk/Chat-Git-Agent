@@ -31,7 +31,7 @@ next_actions:
   - 收到 ARCHITECT 报告后核对 diff/文档/refs；通过后再建立 BUILDER TASK 实现 durable dispatch、role discoverability、cold-start/audit、Bootstrap、LICENSE/release package 等修复。
   - 独立收敛 TASK-0006 原始 RELEASE 报告；未取得原报告或用户明确替代决定前保持未完全关闭。
 
-last_verified_ref: 358b340b4117a30b5e62ea71df8ff427fcfa0ed3
+last_verified_ref: 74f4ca271694a183c92574cdbedc6772323d7faf
 architect_control:
   status: ACTIVE
   holder: current-chat
