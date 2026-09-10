@@ -24,4 +24,4 @@
 
 ## Release
 
-只有独立任务、`human_authorization` 指向的明确 Human 授权和全部门槛同时满足时，才执行 merge、deploy 或 release。涉及 GitHub 时，对应 `remote_actions` 还必须明确允许。已有提交、验证或已接受工作分支均不自动授予此权限。
+只有独立任务、`human_authorization` 指向的明确 Human 授权和全部门槛同时满足时，才执行 merge、deploy 或 release。涉及 GitHub 时，对应 `remote_actions` 还必须明确允许。已有提交、验证或已接受工作分支均不自动授予此权限。merge 的当前目标绑定与原子保护按 EXECUTION_PROTOCOL 的 GitHub 中继规则执行。

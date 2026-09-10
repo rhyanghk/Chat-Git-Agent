@@ -1,8 +1,16 @@
 # Chat-Git-Agent
 
+当前派发接口适配 ai-use Agent Interface 2.3.0：五字段卡、四类运行位置与最小寻址 Seed，格式只见 CONTROL_RUNTIME 第 4 节。旧合同保持原文；human_copy 仍交完整 TASK。Global Architect 治理检查的有限派发及无项目纯检查规则分别见控制合同第 1.6 节与执行协议。
+
+阶段检查点、私有源访问提示、写入失败状态、失联交接有限授权及语言覆盖规则以 [控制合同](CHAT_CONTROL/CONTROL_RUNTIME.md) 和 [执行协议](AGENT_SKILL/chat-git-agent/references/EXECUTION_PROTOCOL.md) 各自职责定义为准；不新增存储系统，不自动改变任务传输。
+
 `Chat-Git-Agent` 让一个独立 Chat 控制项目与一个或多个独立执行 Agent 完成完整任务闭环。它不保存业务代码、秘密或运行态；业务项目只保存自己的代码、任务、报告和证据。
 
 ## 安装后怎样完整运行
+
+新 TASK 明确包含同号的 `task` 字段与独立 `project_id`，不再使用旧 `project` 字段；旧合同需新 revision，不能静默迁移。派发运行位置分类、实质架构现状核对及交接证据链均以 [CONTROL_RUNTIME.md](CHAT_CONTROL/CONTROL_RUNTIME.md) 为唯一合同来源；能力检查不等于权限，交接接受不等于已通过接任后启动检查。
+
+按来源整理交流时，Chat 使用 [控制运行文件第 2.1 节](CHAT_CONTROL/CONTROL_RUNTIME.md) 生成非权威结果；Agent 在既有 TASK 内按 [输入与证据边界](AGENT_SKILL/chat-git-agent/references/EXECUTION_PROTOCOL.md) 处理材料并输出完整 REPORT。来源不可读不等于无需保存，无 Git 不自动改变任务传输，生成规则版本与来源覆盖保留在输出中。上游适配范围见 [NOTICE.md](NOTICE.md)。
 
 ~~~text
 Human
@@ -75,7 +83,11 @@ Chat 控制模型
 
 新项目 bootstrap 自动生成一个不透明的 `project_id`，只用于控制记录关联；它绝不决定或改动项目名称、仓库名称或项目位置。项目可先进入只读 `DISCOVERY`，在首次正式记录或派发前再绑定唯一正式资料库（`authority_store`）和 primary `Project Architect`。任务中的 `authority_source` 是资料库中一份正式记录的精确位置；资料库必须能保留可定位的 TASK、状态、决定与报告原文。聊天记忆、临时附件和复制后的摘要都不能成为第二份合同。
 
-同一个控制项目管理多个业务项目时，使用 `CHAT_CONTROL_REGISTRY` 只登记项目资料库、项目位置、当前主责和当前状态位置；不把业务代码或任务正文复制进控制项目。
+首次启动证据、普通交接接收方与 Global Architect 的角色门槛、启动后的继续／停止分类以 `CONTROL_RUNTIME.md` 第 1.6–1.7 节为准；登记 claim 不等于业务就绪。
+
+失联恢复的有限授权例外以 `CONTROL_RUNTIME.md` 第 4 节为准，不授予业务派发权。检查点分配 `checkpoint_reports` 的变更也须新 revision；阶段报告的等待与恢复、最终报告的停止边界以执行协议为准。
+
+独立治理或跨项目控制使用 CHAT_CONTROL_REGISTRY 登记 governance_source、authority_store 与项目入口；projects 可为空，资产入口可为 none。单项目由 bootstrap 提供最小登记，不把业务代码或任务正文复制进控制项目。两端权威优先级与 Release 目标保护分别以控制合同和执行协议为准。
 
 ## 业务项目最低可复现契约
 

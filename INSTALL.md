@@ -31,25 +31,33 @@ authority_store: <exact formal location or pending>
 authority_access: <Chat read/write | Chat read only | Human recording (default) | other exact condition>
 当前事项: <TASK、TASK-STATE、DECISION、项目记录，或 none>
 
-请先读取 CONTROL_RUNTIME.md。新项目自动以 Project Architect、自动生成的不透明 project_id 和 DISCOVERY 启动；project_id 不影响项目名称、仓库名称或项目位置。资料库、正式 primary claim、项目位置和项目规则只在正式记录或派发前绑定。
+请先读取 CONTROL_RUNTIME.md。新项目自动以 Project Architect、自动生成的不透明 project_id 和 DISCOVERY 启动；project_id 不影响项目名称、仓库名称或项目位置。正式动作按第 1.6 节绑定资料库、角色授权及适用的 primary claim，并核对项目位置和规则；业务就绪还须启动证据正式落库。
 ```
+
+当前接口适配 ai-use Agent Interface 2.3.0，派发卡与 Seed 的唯一模板在 CONTROL_RUNTIME 第 4 节。新 Seed 只寻址，完整 TASK 仍是执行门槛；human_copy 不使用 Seed。治理会话无对应项目主责时的检查派发，以及 project_location: none 的纯检查例外，分别遵循控制合同第 1.6 节与执行协议；不用于业务任务。
 
 ## 2. 从 Chat 派发到 Agent，再回到 Chat
 
 1. Human 用启动卡建立 Chat 控制会话；Chat 按 `CONTROL_RUNTIME.md` 自动创建 `Project Architect / DISCOVERY` 的 `CHAT_CONTROL_BOOTSTRAP`。这一步生成控制用 `project_id`，但不影响项目名称、仓库名称或项目位置；没有实际任务时不创建 TASK 或 TASK-STATE。
 2. Chat 为每个执行角色创建独立任务。任务明确写 `project_location`、`project_rules`、`transport: local`、`github_relay` 或 `human_copy`。
 3. Human 启动一个装有 `Chat-Git-Agent` 的独立 Agent 会话：
-   - Agent 可读取 `authority_source` 时，只复制控制运行文件中的完整 `SEED-TASK-...`；
-   - Agent 不可读取时，使用 `human_copy`，复制完整 `TASK` 记录，不能只复制摘要。
+   - TASK 已声明 local 或 github_relay 且 Agent 可读取完整 TASK 时，只复制控制运行文件“Agent 启动 Seed”中的当前寻址格式；
+   - TASK 已声明 human_copy 时，复制完整 `TASK` 记录，不能只复制摘要。访问故障不自动切换 transport；需要变更时先创建新 revision。
 4. Agent 只按当前任务工作并产出 `REPORT`：
    - `local` / `github_relay`：写入任务指定位置后给出报告位置；
    - `human_copy`：原样返回完整 `REPORT`，`delivery_state: RETURNED_FOR_HUMAN_RECORDING`，不声称已提交。
 5. 只有在 `human_copy` 中，Human 将该 `REPORT` 原样写入 `authority_store`，再将报告位置提供给 Chat。任一传输方式下，如果该 Chat 无法直接读取资料库，同时提供 REPORT 的原样副本和该位置。
 6. Chat 从正式资料库或 Human 提供的原样正式记录读取结果、验证和风险；Human 决定是否接受、是否创建新 revision，以及是否授权 merge、deploy 或 release。Chat 将 Human 决定写为 `DECISION`，并以新的 `TASK-STATE` 记录结果。
 
+首次与接任启动按 `CONTROL_RUNTIME.md` 第 1.6–1.7 节记录角色授权、逐项检查证据及继续／停止分类；旧 bootstrap 不追溯补标 READY。Global Architect 与交接接收方按各自门槛处理，不统一要求项目 primary claim。
+
+失联恢复仅按 `CONTROL_RUNTIME.md` 第 4 节的有限授权例外操作。检查点 `checkpoint_reports` 分配变化须新 revision；`human_copy` 阶段报告须等待落库并按执行协议复核后继续，最终报告则停止等待验收。
+
 这样一个 Chat 可以向多个平台、多个执行角色派发；每个 Agent 仍只处理一个独立编号任务。
 
 ## 3. 发送一条安装指令给 Agent
+
+需要整理交流时，向 Chat 指定来源范围并说明是否仅显式输出，由控制运行文件第 2.1 节处理；无需安装新角色或新资料库。测试 / 不回写时不产生外部写入。无 Git 的执行任务应在派发前声明 `human_copy`；已派发任务不得自动改变 transport。REPORT 的“验证”同时保留实际生成规则版本和来源覆盖。
 
 `Chat-Git-Agent` 只安装到用户级 Agent Skill 目录，不进入 Chat 控制项目或业务项目仓库。把下列文字原样发送给具有本地文件和网络访问权限的 Agent：
 
@@ -108,23 +116,17 @@ GitHub Copilot CLI 可从源 `SKILL.md` 安装：
 copilot plugins install --skill ./AGENT_SKILL/chat-git-agent/SKILL.md
 ```
 
-安装只让平台发现 Skill，不产生授权。共享资料库可达时提供控制运行文件规定的完整 Seed：
-
-```text
-SEED-TASK-000001-R001
----
-task: TASK-000001-R001
-role: Builder
-startup_mode: fresh
-authority_source: <完整 TASK 的精确位置>
-transport: local
-github_repository: none
-github_task_location: none
-```
+安装只让平台发现 Skill，不产生授权。共享资料库可达时，使用 [CONTROL_RUNTIME.md 的 Agent 启动 Seed](CHAT_CONTROL/CONTROL_RUNTIME.md#agent-启动-seed)；按地址选择私仓工单、公仓工单或任务记录，不在安装文档维护第二份模板。
 
 使用 `human_copy` 时，提供控制运行文件生成的完整 `TASK` 记录。Skill 会据此工作并返回完整 `REPORT`，由 Human 原样记录到唯一正式资料库；记录后的精确位置再交回 Chat。
 
+新建控制工作空间需在 bootstrap/registry 记录 governance_source 与 authority_store；无业务项目使用空 projects，不省略治理登记。旧记录通过新 revision 补齐，不追溯改标。Release 合并检查须验证已审查 head 的原子保护能力；不支持保护时停止，不用成功读取冒充可安全写入。
+
 ## 5. 首次闭环验证
+
+长任务派发前补齐 checkpoint_reports；私有 GitHub 源在首次访问前提供 access 提示。验证写入失败时返回完整 NOT_WRITTEN 且不自动转 human_copy；未知写入结果先回读；旧架构师失联时仅凭正式 Human recovery 授权补派检查，不能派业务；英文模板不覆盖中文默认，而明确 Human 语言要求可覆盖。均按控制运行文件及执行协议执行，不改写旧记录。
+
+升级后重新提供两份 Chat 静态资料和更新的执行 Skill（已有安装仍遵守安装器停止规则）。新派发检查 `task` 与标题一致、`project_id` 独立且不改仓库位置；旧 `project` 合同先由控制层发新 revision。按控制运行文件测试当前五字段派发卡、四类运行位置与寻址 Seed、架构现状核对触发及交接各阶段；任一交接前置证据缺失不得接受，接受后仍须启动检查通过。不得将更新文档视为既有任务或交接已重新验证。
 
 在真实业务任务前，使用一个可丢弃的测试项目完成一次最小闭环：
 
